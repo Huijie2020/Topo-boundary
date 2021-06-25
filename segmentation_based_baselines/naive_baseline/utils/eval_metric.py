@@ -41,7 +41,8 @@ def simplify_graph():
     skel_list = [x+'.png' for x in json_data]
     with tqdm(total=len(skel_list), unit='img') as pbar:
         for i,skel_name in enumerate(skel_list):
-            skel = np.array(Image.open(os.path.join(predicted_skel_dir,skel_name)))[:,:,0]
+            # skel = np.array(Image.open(os.path.join(predicted_skel_dir,skel_name)))[:,:,0]
+            skel = np.array(Image.open(os.path.join(predicted_skel_dir, skel_name)))
             generate_graph(skel,skel_name)
             pbar.update()
         # break
@@ -172,22 +173,26 @@ def thr_eval(name_in):
     pre_f1 = np.zeros((4))
     counter = 0
     print('Start calculating pixel-level metrics...')
-    skel_dir = predicted_skel_dir
-    img_list = os.listdir(skel_dir)
+    # skel_dir = predicted_skel_dir
+    skel_dir = predicted_segmentation_dir
+    # img_list = os.listdir(skel_dir)
     with open('./dataset/data_split.json','r') as jf:
         img_list = json.load(jf)['test']
     img_list = [x+'.png' for x in img_list]
     with tqdm(total=len(img_list), unit='img') as pbar:
         for i,img in enumerate(img_list):
-            gt_image = np.array(Image.open(os.path.join(args.mask_dir,img)))[:,:,0]
-            pre_image = np.array(Image.open(os.path.join(skel_dir,img)))[:,:,0]
+            # gt_image = np.array(Image.open(os.path.join(args.mask_dir,img)))[:,:,0]
+            gt_image = np.array(Image.open(os.path.join(args.mask_dir, img)))
+            # pre_image = np.array(Image.open(os.path.join(skel_dir,img)))[:,:,0]
+            pre_image = np.array(Image.open(os.path.join(skel_dir, img)))
             if len(np.where(pre_image!=0)[0])==0:
                 continue
             gt_points = tuple2list(np.where(gt_image!=0))
             pre_points = tuple2list(np.where(pre_image!=0))
             gt_tree = cKDTree(gt_points)
 
-            for ii,thr in enumerate([2,5,10]):
+            for ii, thr in enumerate([1,5,10]):
+            #for ii,thr in enumerate([2,5,10]):
                 if len(pre_points):
                     # recall
                     pre_tree = cKDTree(pre_points)
@@ -219,8 +224,10 @@ def entropy_conn(name_in):
     naive = 0
     with tqdm(total=len(img_list), unit='img') as pbar:
         for i,img in enumerate(img_list):
-            gt_image = np.array(Image.open(os.path.join(args.mask_dir,img)))[:,:,0]
-            pre_image = np.array(Image.open(os.path.join(predicted_skel_dir,img)))[:,:,0]
+            # gt_image = np.array(Image.open(os.path.join(args.mask_dir,img)))[:,:,0]
+            gt_image = np.array(Image.open(os.path.join(args.mask_dir, img)))
+            # pre_image = np.array(Image.open(os.path.join(predicted_skel_dir,img)))[:,:,0]
+            pre_image = np.array(Image.open(os.path.join(predicted_skel_dir, img)))
             # find instances of the gt map
             gt_instance_map = measure.label(gt_image / 255,background=0)
             gt_instance_indexes = np.unique(gt_instance_map)[1:]
@@ -356,27 +363,58 @@ def APLS(name_in):
 def latex(file_name):
     with open('./{}_thr_eval.json'.format(file_name)) as jf:
         json_load = json.load(jf)
-    
-    with open('./{}_connectivity.json'.format(file_name)) as jf:
-        json_load_c = json.load(jf)
 
-    with open('./{}_APLS.json'.format(file_name)) as jf:
-        json_load_a = json.load(jf)
+    # with open('./{}_connectivity.json'.format(file_name)) as jf:
+    #     json_load_c = json.load(jf)
+
+    # with open('./{}_APLS.json'.format(file_name)) as jf:
+    #     json_load_a = json.load(jf)
 
     print('===========================================')
-    print('Precision 2/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_acc'][0]),\
+    print('Precision 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_acc'][0]),\
                                             ('%.3f'%json_load['pre_acc'][1]),\
                                             ('%.3f'%json_load['pre_acc'][2])))
-    print('Recall 2/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_recall'][0]),\
+    print('Recall 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_recall'][0]),\
                                             ('%.3f'%json_load['pre_recall'][1]),\
                                             ('%.3f'%json_load['pre_recall'][2])))
-    print('F1-score 2/5/10: {}/{}/{}'.format(('%.3f'%json_load['r_f1'][0]),\
+    print('F1-score 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['r_f1'][0]),\
                                             ('%.3f'%json_load['r_f1'][1]),\
                                             ('%.3f'%json_load['r_f1'][2])))
-    print('Naive connectivity: {}'.format(('%.3f'%json_load_c['naive'])))
-    print('APLS: {}'.format(('%.3f'%json_load_a['APLS'])))
-    print('ECM: {}'.format(('%.3f'%json_load_c['ECM'])))
+    # print('Naive connectivity: {}'.format(('%.3f'%json_load_c['naive'])))
+    # print('APLS: {}'.format(('%.3f'%json_load_a['APLS'])))
+    # print('ECM: {}'.format(('%.3f'%json_load_c['ECM'])))
     print('===========================================')
+
+# def latex(file_name):
+#     with open('./{}_thr_eval.json'.format(file_name)) as jf:
+#         json_load = json.load(jf)
+#
+#     # with open('./{}_connectivity.json'.format(file_name)) as jf:
+#     #     json_load_c = json.load(jf)
+#
+#     # with open('./{}_APLS.json'.format(file_name)) as jf:
+#     #     json_load_a = json.load(jf)
+#
+#     print('===========================================')
+#     # print('Precision 1/2/5/10: {}/{}/{}/{}'.format(('%.3f' % json_load['pre_acc'][0]), \
+#     #                                           ('%.3f' % json_load['pre_acc'][1]), \
+#     #                                           ('%.3f' % json_load['pre_acc'][2]), \
+#     #                                           ('%.3f' % json_load['pre_acc'][3])))
+#     # print('Recall 1/2/5/10: {}/{}/{}/{}'.format(('%.3f' % json_load['pre_recall'][0]), \
+#     #                                        ('%.3f' % json_load['pre_recall'][1]), \
+#     #                                        ('%.3f' % json_load['pre_recall'][2]),\
+#     #                                        ('%.3f' % json_load['pre_recall'][3])))
+#     # print('F1-score 1/2/5/10: {}/{}/{}/{}'.format(('%.3f' % json_load['r_f1'][0]), \
+#     #                                          ('%.3f' % json_load['r_f1'][1]), \
+#     #                                          ('%.3f' % json_load['r_f1'][2]),\
+#     #                                          ('%.3f' % json_load['r_f1'][3])))
+#     print('Precision 1: {}'.format('%.3f' % json_load['pre_acc'][0]))
+#     print('Recall 1: {}'.format('%.3f' % json_load['pre_recall'][0]))
+#     print('F1-score 1: {}'.format('%.3f' % json_load['r_f1'][0]))
+#     # print('Naive connectivity: {}'.format(('%.3f' % json_load_c['naive'])))
+#     # print('APLS: {}'.format(('%.3f' % json_load_a['APLS'])))
+#     # print('ECM: {}'.format(('%.3f' % json_load_c['ECM'])))
+#     print('===========================================')
 
     # ============== latex format 1
     # print(('%.3f'%json_load['pre_acc'][0])
@@ -409,10 +447,10 @@ def latex(file_name):
 def main():
     print('------------ Starting evaluation... ------------')
     print(baseline_name)
-    simplify_graph()
+    # simplify_graph()
     thr_eval(baseline_name)
-    entropy_conn(baseline_name)
-    APLS(baseline_name)
+    # entropy_conn(baseline_name)
+    # APLS(baseline_name)
     print('Finish evaluation!')
     latex(baseline_name)
 

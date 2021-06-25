@@ -2,15 +2,33 @@
 device: 'cuda:0'
 
 # training params
-epochs: 10 # number of epochs
-batch_size: 1
-lr: 0.0001 # learning rate
+#epochs: 10 # number of epochs
+#batch_size: 1
+#lr: 0.0001 # learning rate
+epochs: 255 # number of epochs
+batch_size: 24
+lr: 0.01 # learning rate
+gamma: 0.1 # learning drop
+lr_steps: [75, 180]
+# lr 0.01, 0.001, 0.0001
+# 1% data epochs: 7500, 18000, 25500
+# 5% data epochs: 1500, 3600, 5100
+# 10% data epochs: [1200, 2200, 3300], [750, 1800, 2550]
+# 100% data epochs: 250, 600, 850
+# 100% data 30% epochs: 75, 180, 255
+
+# dataset
+crop_size: 256
+thresh: 0.76
 
 # dirs
 checkpoints_dir: './checkpoints/'
 # test
 test: False # whether run test
-load_checkpoint: './checkpoints/naive_baseline_9.pth' # if test is True, load the checkpoint
+load_checkpoint: './checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth' # if test is True, load the checkpoint
+
+# resume
+resume: False # whether resume
 
 # docker 
 docker_sub_dir: segmentation_based_baselines/naive_baseline

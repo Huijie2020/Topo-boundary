@@ -1,2 +1,46 @@
-graph_based_baselines/DAGMapper
-graph_based_baselines/ConvBoundary
+graph_based_baselines/DAGMapper/
+graph_based_baselines/ConvBoundary/
+graph_based_baselines/Enhanced-iCurb/
+graph_based_baselines/RoadTracer/
+graph_based_baselines
+
+dataset/pretrain_checkpoints/
+
+# pr curve
+Binary-Segmentation-Evaluation-Tool
+Binary-Segmentation-Evaluation-Tool_0
+
+*.jpg
+*.png
+*.txt
+*.json
+*.pickle
+
+# expriment
+conn_experiment/
+
+# compilation and distribution
+__pycache__
+_ext
+*.pyc
+*.pyd
+*.so
+
+# pytorch/python/numpy formats
+*.pth
+*.pkl
+*.npy
+
+# ipython/jupyter notebooks
+*.ipynb
+**/.ipynb_checkpoints/
+
+# Editor temporaries
+*.swn
+*.swo
+*.swp
+*~
+
+# editor settings
+.idea
+.vscode
