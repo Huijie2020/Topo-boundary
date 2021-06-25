@@ -16,7 +16,7 @@ update_dir_candidate(args)
 
 def corrupted_mask(set_name):
     print('Start generating corrupted masks of {}'.format(set_name))
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
         json_list = json.load(jf)[set_name]
     json_list = [x + '.png' for x in json_list]
     gt_dir = args.mask_dir

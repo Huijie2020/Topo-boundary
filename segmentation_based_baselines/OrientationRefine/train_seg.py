@@ -26,7 +26,7 @@ from arguments import *
 
 class dataset(Dataset):
     def __init__(self,valid=False):
-        with open('./dataset/data_split.json','r') as jf:
+        with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
             json_list = json.load(jf)['pretrain']
         self.file_list = json_list
         self.tiff_list = [os.path.join(args.image_dir,'{}.tiff'.format(x)) for x in self.file_list]
@@ -45,7 +45,7 @@ class dataset(Dataset):
 
 class valid_dataset(Dataset):
     def __init__(self,mode=0):
-        with open('./dataset/data_split.json','r') as jf:
+        with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
             json_list = json.load(jf) 
         if args.mode=='train':
             self.file_list = json_list['valid']

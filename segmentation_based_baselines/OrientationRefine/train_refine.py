@@ -24,7 +24,7 @@ from model.models import MODELS_REFINE
 from tqdm import tqdm
 class dataset(Dataset):
     def __init__(self,args,valid=False):
-        with open('./dataset/data_split.json','r') as jf:
+        with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
             json_list = json.load(jf)['train']
         self.file_list = json_list
         self.tiff_list = [os.path.join(args.image_dir,'{}.tiff'.format(x)) for x in self.file_list]
@@ -47,7 +47,7 @@ class dataset(Dataset):
 
 class valid_dataset(Dataset):
     def __init__(self,args):
-        with open('./dataset/data_split.json','r') as jf:
+        with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
             json_list = json.load(jf) 
         if args.mode == 'test':
             self.file_list = json_list['test']
@@ -171,7 +171,7 @@ def val(args,epoch,net,dataloader,ii,val_len,writer):
 
 def skeleton():
     print('Start skeletonization...')
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
         json_data = json.load(jf)['test']
     skel_list = [x+'.png' for x in json_data]
     with tqdm(total=len(skel_list), unit='img') as pbar:

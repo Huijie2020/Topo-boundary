@@ -36,7 +36,7 @@ predicted_graph_dir = './records/refine/test/graph'
 
 def simplify_graph():
     print('Start simplifying graph...')
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json', 'r') as jf:
         json_data = json.load(jf)['test']
     skel_list = [x+'.png' for x in json_data]
     with tqdm(total=len(skel_list), unit='img') as pbar:
@@ -174,7 +174,7 @@ def thr_eval(name_in):
     print('Start calculating pixel-level metrics...')
     skel_dir = predicted_skel_dir
     img_list = os.listdir(skel_dir)
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json', 'r') as jf:
         img_list = json.load(jf)['test']
     img_list = [x+'.png' for x in img_list]
     with tqdm(total=len(img_list), unit='img') as pbar:
@@ -212,7 +212,7 @@ def thr_eval(name_in):
 
 def entropy_conn(name_in):
     print('Start calculating ECM...')
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json', 'r') as jf:
         json_data = json.load(jf)['test']
     img_list = [x+'.png' for x in json_data]
     ECM = 0
@@ -300,7 +300,7 @@ def entropy_conn(name_in):
 def APLS(name_in):
     print('Start calculating APLS')
     APLS = 0
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json', 'r') as jf:
         json_data = json.load(jf)['test']
     image_list = [x+'.pickle' for x in json_data]
     with tqdm(total=len(image_list), unit='img') as pbar:

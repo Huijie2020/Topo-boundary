@@ -4,7 +4,7 @@ seg:
   # training params
   device: 'cuda:0'
   epochs: 10 # number of epochs
-  batch_size: 2
+  batch_size: 1
   lr: 0.0005 # learning rate
   weight_decay: 0.00001
   mode: 'train' # "train": train the segmentation network with pretrain patches
