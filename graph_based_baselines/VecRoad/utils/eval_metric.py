@@ -35,7 +35,7 @@ baseline_name = 'VecRoad'
 
 def simplify_graph():
     print('Start simplifying graph...')
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
         json_data = json.load(jf)['test']
     skel_list = [x+'.png' for x in json_data]
     with tqdm(total=len(skel_list), unit='img') as pbar:

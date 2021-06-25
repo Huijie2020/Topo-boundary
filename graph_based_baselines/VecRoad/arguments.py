@@ -10,7 +10,7 @@ def get_parser():
 
     parser = argparse.ArgumentParser()
     
-    with open('./dataset/config_dir.yml', 'r') as f:
+    with open('/mnt/git/Topo-boundary/dataset/config_dir.yml', 'r') as f:
         conf = yaml.safe_load(f.read())    # load the config file
     process(**conf)
     

@@ -460,6 +460,10 @@ class Network(FrozenClass):
         torch.save(self.decoder_coord.state_dict(), "./records/checkpoints/decoder_nodis_coord_best.pth")
         torch.save(self.decoder_stop.state_dict(), "./records/checkpoints/decoder_nodis_flag_best.pth")
 
+    def save_checkpoints_iteration(self,i):
+        print('Saving checkpoints iteration {}.....'.format(i))
+        torch.save(self.decoder_coord.state_dict(), "./records/checkpoints/decoder_nodis_coord_iteration_{}.pth".format(i))
+        torch.save(self.decoder_stop.state_dict(), "./records/checkpoints/decoder_nodis_flag_iteration_{}.pth".format(i))
 
     def DAgger_collate(self,batch):
         # variables as tensor

@@ -64,7 +64,7 @@ class DatasetDagger(Dataset):
         return cat_tiff, v_now, v_previous, crop_info, cropped_point, gt_stop_action
 
 def load_datadir(seq_path,mask_path,image_path,mode):
-    with open('./dataset/data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/dataset/data_split.json','r') as jf:
         json_list = json.load(jf)
     train_list = json_list['train']
     test_list = json_list['test']

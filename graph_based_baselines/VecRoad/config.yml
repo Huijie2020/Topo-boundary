@@ -1,5 +1,5 @@
 # device 
-device: 'cuda:1'
+device: 'cuda:0'
 
 # training params
 epochs: 2 # number of epochs
@@ -15,6 +15,7 @@ test: False # whether run inference
 
 # dirs
 checkpoints_dir: './checkpoints/'
+#checkpoints_dir: '/mnt/git/Topo-boundary/dataset/pretrain_checkpoints/VecRoad/vecRoad_best.pth'
 
 # docker 
 docker_sub_dir: graph_based_baselines/VecRoad

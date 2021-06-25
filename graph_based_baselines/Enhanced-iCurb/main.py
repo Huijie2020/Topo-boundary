@@ -32,6 +32,9 @@ def main():
                     if f1 > env.network.best_f1:
                         env.network.best_f1 = f1
                         env.network.save_checkpoints(iCurb_image_index)
+
+                    env.network.save_checkpoints_iteration(epoch * env.network.train_len() + iCurb_image_index)
+
                 # training mode
                 env.network.train_mode()
                 run_train(env,data,iCurb_image_index)
