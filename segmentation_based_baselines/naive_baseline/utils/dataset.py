@@ -87,7 +87,7 @@ class BasicDataset(Dataset):
         if len(img_nd.shape) == 2:
             img_nd = np.expand_dims(img_nd, axis=2)
         #
-        img_trans = img_nd.transpose((2, 0, 1)) # -> [c, w, h]
+        img_trans = img_nd.transpose((2, 0, 1)) # -> [c, h, w]
         if img_trans.max() > 1:
             img_trans = img_trans / 255
         return img_trans
@@ -113,9 +113,9 @@ class BasicDataset(Dataset):
 
         # if self.test or self.valid:
         #     sub_imgs = self.crop(img, self.crop_size)
-        #     img = np.stack(sub_imgs, axis=0) #[c, w, h] -> [n, c, w, h]
+        #     img = np.stack(sub_imgs, axis=0) #[c, w, h] -> [n, c, h, w]
         return {
-            'image': torch.from_numpy(img).type(torch.FloatTensor), #[b, n, c, w, h]
+            'image': torch.from_numpy(img).type(torch.FloatTensor), #[b, n, c, h, w]
             'mask': torch.from_numpy(mask).type(torch.FloatTensor),
             'name':idx
         }
