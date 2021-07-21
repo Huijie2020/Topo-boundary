@@ -26,9 +26,34 @@ checkpoints_dir: './checkpoints/'
 # test
 test: False # whether run test
 load_checkpoint: './checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth' # if test is True, load the checkpoint
+# 1% iter0
+# ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
+# 1% iter0 ta+tta
+# ./checkpoints/model_last/1data_25500epoch/exp1.2_best_thr0_ta_tta_iter/iter0/naive_baseline_best.pth
+# 1% iter1
+#'./checkpoints/model_last/1data_25500epoch/exp1_best_thr0_iter/best_thr0.76and0_iter1/naive_baseline_best.pth'
+# 5% iter0
+#./checkpoints/model_last/5data_5100epoch/naive_baseline_best.pth
+# 5% iter0 ta+tta
+# ./checkpoints/model_last/5data_5100epoch/exp5.2_best_thr0_ta_tta_iter/iter0/naive_baseline_best.pth
+# 5% iter1
+# ./checkpoints/model_last/5data_5100epoch/exp5_best_thr0_iter/best_thr0.76and0_iter1/naive_baseline_best.pth
 
 # resume
 resume: False # whether resume
+
+# training data
+data_argumentation: True # whether training dat argumentation
+
+# test setting
+thr0: False # whether use threshold = 0 for prediction
+tta: True # whether test-time argumentation
+tta_thr: 0.2 # threshold for prediction with tta
+no_tta_thr: 0 # threshold for prediction without tta
+
+# skeleton threshold
+skeleton_thr: 0.2
+skeleton_ig_line: 5
 
 # docker 
 docker_sub_dir: segmentation_based_baselines/naive_baseline

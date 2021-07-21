@@ -181,7 +181,7 @@ def thr_eval(name_in):
     img_list = [x+'.png' for x in img_list]
     with tqdm(total=len(img_list), unit='img') as pbar:
         for i,img in enumerate(img_list):
-            # gt_image = np.array(Image.open(os.path.join(args.mask_dir,img)))[:,:,0]
+            gt_image = np.array(Image.open(os.path.join(args.mask_dir,img)))[:,:,0]
             gt_image = np.array(Image.open(os.path.join(args.mask_dir, img)))
             # pre_image = np.array(Image.open(os.path.join(skel_dir,img)))[:,:,0]
             pre_image = np.array(Image.open(os.path.join(skel_dir, img)))

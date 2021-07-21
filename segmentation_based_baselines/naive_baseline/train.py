@@ -22,8 +22,6 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from arguments import get_parser, update_dir_train, update_dir_test, update_dir_resume
 
-from pytorch_toolbelt.inference.tiles import ImageSlicer, CudaTileMerger
-from pytorch_toolbelt.utils.torch_utils import tensor_from_rgb_image, to_numpy
 
 import matplotlib
 from matplotlib import pyplot as plt
@@ -40,7 +38,7 @@ def train_net(net,
 
     train = BasicDataset(args,False)
     val = BasicDataset(args,True)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
     val_loader = DataLoader(val, batch_size=1, shuffle=False,  pin_memory=True, drop_last=False, num_workers=1)
     n_val = len(val)
     n_train = len(train) 
@@ -126,21 +124,21 @@ def train_net(net,
                     #     args.checkpoints_dir + 'naive_baseline_{}.pth'.format(epoch))
         lr_schedule.step()
 
-def skeleton():
+def skeleton(args):
     print('Start skeletonization...')
     with open('./dataset/data_split.json','r') as jf:
         json_data = json.load(jf)['test']
     skel_list = [x+'.png' for x in json_data]
     with tqdm(total=len(skel_list), unit='img') as pbar:
         # thr = 0.2
-        thr = 0.298
+        thr = args.skeleton_thr
         for i,seg in enumerate(skel_list):
             seg_name = os.path.join('./records/test/segmentation',seg)
             # img = np.array(Image.open(seg_name))[:,:,0] / 255
             img = np.array(Image.open(seg_name)) / 255
             img = img / (np.max(img))
             # binarization
-            img = (img >= thr)
+            img = (img > thr)
             # skeletonization
             seg_skeleton = skeletonize(img, method='lee')
             instances = measure.label(seg_skeleton / 255,background=0)
@@ -149,7 +147,7 @@ def skeleton():
             for index in indexs:
                 instance_map = (instances == index)
                 instance_points = np.where(instance_map==1)
-                if len(instance_points[0]) < 30:
+                if len(instance_points[0]) < args.skeleton_ig_line:
                     seg_skeleton[instance_points] = 0
             Image.fromarray(seg_skeleton).convert('L').save(os.path.join('./records/test/skeleton',seg))
             pbar.update()
@@ -192,9 +190,9 @@ if __name__ == '__main__':
                     device=device)
         else:
             test = BasicDataset(args)
-            test_loader = DataLoader(test, batch_size=1, shuffle=False,  pin_memory=True, drop_last=True)
+            test_loader = DataLoader(test, batch_size=1, shuffle=False,  pin_memory=True, drop_last=False)
             eval_net(args,net, test_loader, device)
-            skeleton()
+            skeleton(args)
 
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
