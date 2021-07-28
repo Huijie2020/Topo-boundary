@@ -49,7 +49,7 @@ data_argumentation: True # whether training dat argumentation
 thr0: False # whether use threshold = 0 for prediction
 tta: True # whether test-time argumentation
 tta_thr: 0.2 # threshold for prediction with tta
-no_tta_thr: 0 # threshold for prediction without tta
+no_tta_thr: 0.2 # threshold for prediction without tta
 
 # skeleton threshold
 skeleton_thr: 0.2

@@ -192,7 +192,7 @@ if __name__ == '__main__':
             test = BasicDataset(args)
             test_loader = DataLoader(test, batch_size=1, shuffle=False,  pin_memory=True, drop_last=False)
             eval_net(args,net, test_loader, device)
-            skeleton(args)
+            # skeleton(args)
 
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')

@@ -51,5 +51,6 @@ def update_dir_test(args):
     check_and_add_dir('./records/test/segmentation')
     check_and_add_dir('./records/test/final_vis',clear=False)
     check_and_add_dir('./records/test/skeleton')
+    # check_and_add_dir('./records/test/skeleton_garbor')
     check_and_add_dir('./records/test/graph',clear=False)
 
