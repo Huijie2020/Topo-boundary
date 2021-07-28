@@ -6,6 +6,8 @@ import os
 import numpy as np
 from sklearn.metrics import average_precision_score
 from dice_loss import dice_coeff
+from utils.skeleton import soft_skel
+from models.gabore_filter_bank import GaborFilters
 
 # def crop(data):
 #     height = data.size(2)
@@ -55,39 +57,79 @@ def eval_net(args,net,loader, device):
 
                     with torch.no_grad():
                         rotated_mask_pred = net(rotated_img)
-                        rotated_mask_save = torch.sigmoid(rotated_mask_pred).squeeze(0).squeeze(0).cpu().detach().numpy()
+                        # rotated_mask_save = torch.sigmoid(rotated_mask_pred).squeeze(0).squeeze(0).cpu().detach().numpy()
+                        rotated_mask_save = torch.sigmoid(rotated_mask_pred).squeeze(0).squeeze(0)
                         if idx == 0:
                             mask_pred_list.append(rotated_mask_pred)
                             mask_save_list.append(rotated_mask_save)
                         else:
                             back_mask_pred = torch.rot90(rotated_mask_pred, 4-idx, (2, 3))
-                            back_mask_save = np.rot90(rotated_mask_save, 4-idx, (0, 1))
+                            back_mask_save = torch.rot90(rotated_mask_save, 4-idx, (0, 1))
                             mask_pred_list.append(back_mask_pred)
                             mask_save_list.append(back_mask_save)
                 pbar.update()
 
                 mask_pred = torch.mean(torch.stack(mask_pred_list), 0)
-                mask_save = np.mean(np.stack(mask_save_list), 0)
+                # mask_save = np.mean(np.stack(mask_save_list), 0)
+                mask_save = torch.mean(torch.stack(mask_save_list), 0)
 
                 if not args.test:
+                    mask_save = mask_save.cpu().detach().numpy()
                     Image.fromarray(mask_save / np.max(mask_save) * 255) \
                         .convert('L').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
                     pred = torch.sigmoid(mask_pred)
                     pred = (pred > 0.1).float()
                     tot += dice_coeff(pred, mask, args).item()
                 else:
-                    mask_max = np.max(mask_save)
                     if args.thr0 == True:
+                        mask_save = mask_save.cpu().detach().numpy()
+                        mask_max = np.max(mask_save)
                         Image.fromarray(mask_save / mask_max * 255) \
-                            .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
+                                    .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
                     else:
-                        mask_save[(mask_save / mask_max) < args.tta_thr] = 0
-                        Image.fromarray(mask_save / mask_max * 255) \
-                            .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
+                        mask_max = torch.max(mask_save)
+                        tta_thr = args.tta_thr * mask_max
+                        thr_mask = (mask_save >= tta_thr).float()
+                        mask_save = mask_save * thr_mask
+
+                        # # save skeleton tensor
+                        # mask_save_ske = mask_save.unsqueeze(0).unsqueeze(0)
+                        # skel = soft_skel(mask_save_ske, 10)
+                        #
+                        # # save gabor filter
+                        # garbo_filter = GaborFilters(in_channels=1)
+                        # garbo_filter.to(device=device)
+                        # skel_garbo = garbo_filter(skel)
+                        # for c in range(skel_garbo.size(1)):
+                        #     skel_garbo_save = skel_garbo[:,c, :, :]
+                        #     skel_garbo_save = np.squeeze(skel_garbo_save.cpu().detach().numpy())
+                        #     skel_garbo_max = np.max(skel_garbo_save)
+                        #     skel_garbo_save = (skel_garbo_save / skel_garbo_max * 255).astype(np.uint8)
+                        #     Image.fromarray(skel_garbo_save).convert('L').save(
+                        #         os.path.join('./records/test/skeleton_garbor', name[0] + '_' + str(c) + '.png'))
+                        #
+                        # # save skeleton tensor
+                        # skel_save = np.squeeze(skel.cpu().detach().numpy())
+                        # skel_max = np.max(skel_save)
+                        # skel_save = (skel_save /skel_max * 255).astype(np.uint8)
+                        # Image.fromarray(skel_save).convert('L').save(os.path.join('./records/test/skeleton', name[0] + '.png'))
+
+                        mask_save_seg = mask_save.cpu().detach().numpy()
+                        mask_max = np.max(mask_save_seg)
+                        Image.fromarray(mask_save_seg / mask_max * 255) \
+                                    .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
+                    # mask_max = np.max(mask_save)
+                    # if args.thr0 == True:
+                    #     Image.fromarray(mask_save / mask_max * 255) \
+                    #         .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
+                    # else:
+                    #     mask_save[(mask_save / mask_max) < args.tta_thr] = 0
+                    #     Image.fromarray(mask_save / mask_max * 255) \
+                    #         .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
 
                     # Image.fromarray(mask_save /np.max(mask_save)*255)\
                     #     .convert('RGB').save(os.path.join('./records/test/segmentation',name[0]+'.png'))
-        print('tot / n_val**********************', tot / n_val)
+        # print('tot / n_val**********************', tot / n_val)
         return tot / n_val
 
     if args.tta == False:
@@ -108,23 +150,35 @@ def eval_net(args,net,loader, device):
                     #     mask_preds.append(mask_pred)
                     # mask_pred = merge(img, mask_preds).to(device=device, dtype=torch.float32)
                     mask_pred = net(img)
-                    mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0).cpu().detach().numpy()
-                    #
+                    # mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0).cpu().detach().numpy()
+                    mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0)
                     if not args.test:
+                        mask_save = mask_save.cpu().detach().numpy()
                         Image.fromarray(mask_save / np.max(mask_save) * 255) \
                             .convert('RGB').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
                         pred = torch.sigmoid(mask_pred)
                         pred = (pred > 0.1).float()
                         tot += dice_coeff(pred, mask, args).item()
                     else:
-                        mask_max = np.max(mask_save)
                         if args.thr0 == True:
+                            mask_save = mask_save.cpu().detach().numpy()
+                            mask_max = np.max(mask_save)
                             Image.fromarray(mask_save / mask_max * 255) \
                                 .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
                         else:
-                            mask_save[(mask_save / mask_max) < args.no_tta_thr] = 0
-                            Image.fromarray(mask_save / mask_max * 255) \
+                            mask_max = torch.max(mask_save)
+                            no_tta_thr = args.no_tta_thr * mask_max
+                            thr_mask = (mask_save >= no_tta_thr).float()
+                            mask_save = mask_save * thr_mask
+
+                            mask_save_seg = mask_save.cpu().detach().numpy()
+                            mask_max = np.max(mask_save_seg)
+                            Image.fromarray(mask_save_seg / mask_max * 255) \
                                 .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
+
+                            # mask_save[(mask_save / mask_max) < args.no_tta_thr] = 0
+                            # Image.fromarray(mask_save / mask_max * 255) \
+                            #     .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
 
                         # Image.fromarray(mask_save /np.max(mask_save)*255)\
                         #     .convert('RGB').save(os.path.join('./records/test/segmentation',name[0]+'.png'))
