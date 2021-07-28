@@ -11,10 +11,14 @@ from torch.nn import functional as F
 class GaborFilters(nn.Module):
     def __init__(self,
                  in_channels,
-                 n_sigmas=3,
-                 n_lambdas=4,
+                 # n_sigmas=3,
+                 # n_lambdas=4,
+                 # n_gammas=1,
+                 # n_thetas=7,
+                 n_sigmas=1,
+                 n_lambdas=1,
                  n_gammas=1,
-                 n_thetas=7,
+                 n_thetas=18,
                  kernel_radius=15,
                  rotation_invariant=True
                  ):
@@ -39,7 +43,8 @@ class GaborFilters(nn.Module):
         self.sigmas = make_param(in_channels, 2 ** numpy.arange(n_sigmas) * 2)
         self.lambdas = make_param(in_channels, 2 ** numpy.arange(n_lambdas) * 4.0)
         self.gammas = make_param(in_channels, numpy.ones(n_gammas) * 0.5)
-        self.psis = make_param(in_channels, numpy.array([0, math.pi / 2.0]))
+        # self.psis = make_param(in_channels, numpy.array([0, math.pi / 2.0]))
+        self.psis = make_param(in_channels, numpy.array([0]))
 
         thetas = numpy.linspace(0.0, 2.0 * math.pi, num=n_thetas, endpoint=False)
         thetas = torch.from_numpy(thetas).float()
@@ -112,7 +117,6 @@ class GaborFilters(nn.Module):
             res, _ = res.max(dim=3)
 
         res = res.view(batch_size, -1, sy, sx)
-
         return res
 
 
