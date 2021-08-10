@@ -20,10 +20,10 @@ class BasicDataset(Dataset):
         self.imgs_dir = args.image_dir
         self.masks_dir = args.mask_dir
         self.threshold = args.thresh
-        self.crop_size = args.crop_size
+        self.crop_size = args.sup_crop_size
         self.test = args.test
         self.tta = args.tta
-        self.data_argumentation = args.data_argumentation
+        self.data_augumentation = args.data_augumentation
         with open('./dataset/data_split.json','r') as jf:
             data_load = json.load(jf)
         if args.test:
@@ -35,9 +35,10 @@ class BasicDataset(Dataset):
                 print('Validation length {}.'.format(len(self.ids)))
                 print('=================')
             else:
-                self.ids = data_load['train'] + data_load['pretrain']
+                # self.ids = data_load['train'] + data_load['pretrain']
+                self.ids = data_load['train_sup']
                 print('=================')
-                print('Training mode: Training length {}.'.format(len(self.ids)))
+                print('Training mode: Training supervised data length {}.'.format(len(self.ids)))
         
         
 
@@ -68,7 +69,7 @@ class BasicDataset(Dataset):
 
         return img_crop, mask_crop
 
-    def data_argu(self, image, mask):
+    def data_augu(self, image, mask):
         whether_hori_flip = random.choice([0, 1])
         whether_ver_flip = random.choice([0, 1])
         whether_colorjitter = random.choice([0, 1])
@@ -197,9 +198,9 @@ class BasicDataset(Dataset):
 
         # random crop image and traning data argumentation
         if (not self.test) and (not self.valid):
-            if self.data_argumentation:
+            if self.data_augumentation:
                 img, mask = self.random_crop(img, mask, self.crop_size)
-                img, mask = self.data_argu(img, mask)
+                img, mask = self.data_augu(img, mask)
             else:
                 img, mask = self.random_crop(img, mask, self.crop_size)
                 img = np.array(img)
