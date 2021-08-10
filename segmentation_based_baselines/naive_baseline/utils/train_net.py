@@ -22,6 +22,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from arguments import get_parser, update_dir_train, update_dir_test, update_dir_resume
 
+import torch.nn.functional as F
 
 def train_net(net,
               args,
