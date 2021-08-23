@@ -74,21 +74,23 @@ class UnsupDataset(Dataset):
         # mask_in = Image.fromarray(mask_in_nd)
 
         # outside crop image1 upperleft location
-        image1, mask1, overlap1_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul, crop_in_h, crop_in_w, crop_out_h, crop_out_w)
+        image1, mask1, overlap1_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
+                                                   crop_in_h, crop_in_w, crop_out_h, crop_out_w)
 
         # outside crop image2 upperleft location
         image2, mask2, overlap2_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
                                                              crop_in_h, crop_in_w, crop_out_h, crop_out_w)
 
-        # outside crop image3 upperleft location
-        image3, mask3, overlap3_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
-                                                             crop_in_h,crop_in_w, crop_out_h, crop_out_w)
+        # # outside crop image3 upperleft location
+        # image3, mask3, overlap3_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
+        #                                                      crop_in_h,crop_in_w, crop_out_h, crop_out_w)
+        #
+        # # outside crop image4 upperleft location
+        # image4, mask4, overlap4_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
+        #                                            crop_in_h, crop_in_w, crop_out_h, crop_out_w)
 
-        # outside crop image4 upperleft location
-        image4, mask4, overlap4_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
-                                                   crop_in_h, crop_in_w, crop_out_h, crop_out_w)
-
-        return image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul
+        # return image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul
+        return image1, mask1, overlap1_ul, image2, mask2, overlap2_ul
 
     def data_augu(self, image, mask):
         whether_hori_flip = random.choice([0, 1])
@@ -148,45 +150,50 @@ class UnsupDataset(Dataset):
 
         # random crop image and traning data augumentation
         if self.data_augumentation:
-            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
             image1, mask1, flip_rotate_1 = self.data_augu(image1, mask1)
             image2, mask2, flip_rotate_2 = self.data_augu(image2, mask2)
-            image3, mask3, flip_rotate_3 = self.data_augu(image3, mask3)
-            image4, mask4, flip_rotate_4 = self.data_augu(image4, mask4)
+            # image3, mask3, flip_rotate_3 = self.data_augu(image3, mask3)
+            # image4, mask4, flip_rotate_4 = self.data_augu(image4, mask4)
         else:
-            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
             image1 = np.array(image1)
             mask1 = np.array(mask1)
             image2 = np.array(image2)
             mask2 = np.array(mask2)
-            image3 = np.array(image3)
-            mask3 = np.array(mask3)
-            image4 = np.array(image3)
-            mask4 = np.array(mask3)
-            flip_rotate_1, flip_rotate_2, flip_rotate_3, flip_rotate_4 = None, None, None, None
+            # image3 = np.array(image3)
+            # mask3 = np.array(mask3)
+            # image4 = np.array(image4)
+            # mask4 = np.array(mask4)
+            # flip_rotate_1, flip_rotate_2, flip_rotate_3, flip_rotate_4 = None, None, None, None
+            flip_rotate_1, flip_rotate_2 = None, None
 
         image1 = self.preprocess(image1)
         mask1 = self.preprocess(mask1)
         image2 = self.preprocess(image2)
         mask2 = self.preprocess(mask2)
-        image3 = self.preprocess(image3)
-        mask3 = self.preprocess(mask3)
-        image4 = self.preprocess(image4)
-        mask4 = self.preprocess(mask4)
+        # image3 = self.preprocess(image3)
+        # mask3 = self.preprocess(mask3)
+        # image4 = self.preprocess(image4)
+        # mask4 = self.preprocess(mask4)
 
-        images =  np.stack([image1, image2, image3, image4])
-        masks = np.stack([mask1, mask2, mask3, mask4])
+        # images =  np.stack([image1, image2, image3, image4])
+        # masks = np.stack([mask1, mask2, mask3, mask4])
+        images =  np.stack([image1, image2])
+        masks = np.stack([mask1, mask2])
 
         return {
             'image': torch.from_numpy(images).type(torch.FloatTensor), #[n, c, h, w]
             'mask': torch.from_numpy(masks).type(torch.FloatTensor),
             'overlap1_ul': overlap1_ul,
             'overlap2_ul': overlap2_ul,
-            'overlap3_ul': overlap3_ul,
-            'overlap4_ul': overlap4_ul,
+            # 'overlap3_ul': overlap3_ul,
+            # 'overlap4_ul': overlap4_ul,
             'flip_rotate_1': flip_rotate_1,
             'flip_rotate_2': flip_rotate_2,
-            'flip_rotate_3': flip_rotate_3,
-            'flip_rotate_4': flip_rotate_4,
+            # 'flip_rotate_3': flip_rotate_3,
+            # 'flip_rotate_4': flip_rotate_4,
             'name':idx
         }
