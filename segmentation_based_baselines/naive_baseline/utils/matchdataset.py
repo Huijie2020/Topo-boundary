@@ -13,18 +13,19 @@ import random
 import torchvision.transforms.functional as TF
 from torchvision import transforms
 
-class UnsupDataset(Dataset):
+class MatchDataset(Dataset):
     def __init__(self, args):
         self.imgs_dir = args.image_dir
         self.masks_dir = args.mask_dir
         self.semi_crop_in_size = args.unsup_crop_in_size
         self.semi_crop_out_size = args.unsup_crop_out_size
+        self.tta = args.tta
         with open('./dataset/data_split.json', 'r') as jf:
             data_load = json.load(jf)
         # self.ids = data_load['train'] + data_load['pretrain']
-        self.ids = data_load['train_unsup']
+        self.ids = data_load['test']
         print('=================')
-        print('Training mode: Training unsupervised data length {}.'.format(len(self.ids)))
+        print('Matching mode. Data length {}.'.format(len(self.ids)))
 
     def __len__(self):
         return len(self.ids)
@@ -118,7 +119,7 @@ class UnsupDataset(Dataset):
         return image_nd, mask_nd
 
     @classmethod
-    def preprocess(cls, img_nd, whether_mask, whether_test, whether_valid, whether_tta):
+    def preprocess(cls, img_nd, whether_mask, whether_tta):
         # normalize image
         def trans(img):
             if len(img.shape) == 2:
@@ -165,20 +166,20 @@ class UnsupDataset(Dataset):
             image4, mask4 = self.toarray(image4, mask4)
 
 
-        image1 = self.preprocess(image1) # (n, h, w, c) --> (n, c, h, w)
-        mask1 = self.preprocess(mask1)
-        image2 = self.preprocess(image2)
-        mask2 = self.preprocess(mask2)
-        image3 = self.preprocess(image3)
-        mask3 = self.preprocess(mask3)
-        image4 = self.preprocess(image4)
-        mask4 = self.preprocess(mask4)
+        image1 = self.preprocess(image1, False, self.tta) # (n, h, w, c) --> (n, c, h, w)
+        mask1 = self.preprocess(mask1, True, self.tta)
+        image2 = self.preprocess(image2, False, self.tta)
+        mask2 = self.preprocess(mask2, True, self.tta)
+        image3 = self.preprocess(image3, False, self.tta)
+        mask3 = self.preprocess(mask3, True, self.tta)
+        image4 = self.preprocess(image4, False, self.tta)
+        mask4 = self.preprocess(mask4, True, self.tta)
 
         images =  np.stack([image1, image2, image3, image4], axis=0) # (n, c, h, w) -> (i, n, c, h, w)
         masks = np.stack([mask1, mask2, mask3, mask4], axis=0) # [c, h, w] -> [i, c, h, w]
 
         return {
-            'image': torch.from_numpy(images).type(torch.FloatTensor), # (i, n, c, h, w)
+            'image': torch.from_numpy(images).type(torch.FloatTensor), # [i, n, c, h, w]
             'mask': torch.from_numpy(masks).type(torch.FloatTensor), # [i, c, h, w]
             'overlap1_ul': overlap1_ul,
             'overlap2_ul': overlap2_ul,
