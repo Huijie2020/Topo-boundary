@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 import time
+import numpy as np
 
 
 def timeit(x, func, iter=10):
@@ -45,8 +46,8 @@ class HOGLayer(nn.Module):
 
             n, c, h, w = gxy.shape
             out = torch.zeros((n, self.nbins, h, w), dtype=torch.float, device=gxy.device)
-            out.scatter_(1, phase_int.floor().long()%self.nbins, norm)
-            out.scatter_add_(1, phase_int.ceil().long()%self.nbins, 1 - norm)
+            out.scatter_(1, phase_int.floor().long() % self.nbins, (phase_int.ceil().long() - phase_int) * norm)
+            out.scatter_add_(1, phase_int.ceil().long() % self.nbins, (phase_int - phase_int.floor().long()) * norm)
 
             return self.pooler(out)
 
@@ -139,16 +140,17 @@ if __name__ == '__main__':
     path = '/mnt/git/Topo-boundary/conn_experiment/expriment/08032021_unet_baseline_1data_99unsup/middle/prediction/epoch14/segmentation_thr0_epoch2_best/RGB-PanSharpen_AOI_2_Vegas_img28.png'
     im = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 
-    x = torch.from_numpy(im)[None, None]
+    x = torch.from_numpy(im)[None, None] / 255.0
+
+    # x = torch.from_numpy(im)[None, None, :256, :256] / 255.0
     if cuda:
         x = x.cuda().float()
     else:
         x = x.float()
 
-    hog = HOGLayer(nbins=12, pool=2)
+    hog = HOGLayer(nbins=12, pool=8)
     if cuda:
         hog = hog.cuda()
-
     y = hog(x)
 
     y2 = y.cpu().numpy()
