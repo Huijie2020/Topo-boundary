@@ -24,6 +24,9 @@ class BasicDataset(Dataset):
         self.test = args.test
         self.tta = args.tta
         self.data_augumentation = args.data_augumentation
+        with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1data_99unsup_100val_431test.json','r') as sup_file:
+            data_sup20 = json.load(sup_file)
+        self.sup20 = data_sup20['train_sup']
         with open('./dataset/data_split.json','r') as jf:
             data_load = json.load(jf)
         if args.test:
@@ -198,13 +201,20 @@ class BasicDataset(Dataset):
 
         # random crop image and traning data argumentation
         if (not self.test) and (not self.valid):
-            if self.data_augumentation:
-                img, mask = self.random_crop(img, mask, self.crop_size)
-                img, mask = self.data_augu(img, mask)
+            if idx in self.sup20:
+                if self.data_augumentation:
+                    img, mask = self.random_crop(img, mask, self.crop_size)
+                    img, mask = self.data_augu(img, mask)
+                else:
+                    img, mask = self.random_crop(img, mask, self.crop_size)
+                    img = np.array(img)
+                    mask = np.array(mask)
             else:
-                img, mask = self.random_crop(img, mask, self.crop_size)
-                img = np.array(img)
-                mask = np.array(mask)
+                if self.data_augumentation:
+                    img, mask = self.data_augu(img, mask)
+                else:
+                    img = np.array(img)
+                    mask = np.array(mask)
 
         # # np.array test and valid
         # if (self.test) or (self.valid):
