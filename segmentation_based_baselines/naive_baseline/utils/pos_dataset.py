@@ -13,7 +13,7 @@ import random
 import torchvision.transforms.functional as TF
 from torchvision import transforms
 
-class UnsupDataset(Dataset):
+class UnsupDataset_pos(Dataset):
     def __init__(self, args):
         self.imgs_dir = args.image_dir
         self.masks_dir = args.mask_dir
@@ -46,7 +46,7 @@ class UnsupDataset(Dataset):
 
         return image_crop, mask_crop, overlap_ul
 
-    def overlap_crop(self, image, mask, semi_crop_in_size, semi_crop_out_size):
+    def overlap_crop(self, image, mask, semi_crop_in_size, semi_crop_out_size, crop_ul):
         w, h = image.size
         # newW, newH = int(w), int(h)
         # assert newW > 0 and newH > 0, 'Scale is too small'
@@ -65,8 +65,11 @@ class UnsupDataset(Dataset):
         mask_nd = np.array(mask)
 
         # inside crop upperleft location
-        x_in_ul = np.random.randint(1, w - crop_in_w - 1)
-        y_in_ul = np.random.randint(1, h - crop_in_h - 1)
+        crop_ul_in_random = random.choice(crop_ul)
+        y_in_ul = crop_ul_in_random[0]
+        x_in_ul = crop_ul_in_random[1]
+        # x_in_ul = np.random.randint(1, w - crop_in_w - 1)
+        # y_in_ul = np.random.randint(1, h - crop_in_h - 1)
         # # inside crop image
         # image_in_nd = image_nd[y_in_ul: y_in_ul + crop_in_h, x_in_ul: x_in_ul + crop_in_w, :]
         # mask_in_nd = mask_nd[y_in_ul: y_in_ul + crop_in_h, x_in_ul: x_in_ul + crop_in_w]
@@ -143,15 +146,17 @@ class UnsupDataset(Dataset):
     def __getitem__(self, i):
         idx = self.ids[i]
         # img_file = os.path.join(self.imgs_dir, idx + '.tiff')
-        img_file = os.path.join(self.imgs_dir, idx + '.png')
-        mask_file = os.path.join(self.masks_dir, idx + '.png')
+        file_name = idx["file_name"]
+        crop_ul = idx["crop_ul"]
+        img_file = os.path.join(self.imgs_dir, file_name + '.png')
+        mask_file = os.path.join(self.masks_dir, file_name + '.png')
         img = Image.open(img_file)
         mask = Image.open(mask_file)
 
         # random crop image and traning data augumentation
         if self.data_augumentation:
             # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
-            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size, crop_ul)
             image1, mask1, flip_rotate_1 = self.data_augu(image1, mask1)
             image2, mask2, flip_rotate_2 = self.data_augu(image2, mask2)
             # image3, mask3, flip_rotate_3 = self.data_augu(image3, mask3)
@@ -195,5 +200,5 @@ class UnsupDataset(Dataset):
             'flip_rotate_2': flip_rotate_2,
             # 'flip_rotate_3': flip_rotate_3,
             # 'flip_rotate_4': flip_rotate_4,
-            'name':idx
+            'name':file_name
         }
