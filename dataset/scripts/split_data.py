@@ -2,12 +2,13 @@ import json
 import random
 
 def split_dataset():
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1998test(0.01data).json','r') as jf:
-    #with open('./data_split.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1data_100val_431test.json','r') as jf:
         data = json.load(jf)
+    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1998test(0.01data).json','r') as jf:
+        data_unsup = json.load(jf)
     train_len = round(len(data['train'])*1)
+    train_unsup_len = len(data_unsup['test'])
     valid_len = len(data['valid'])
-    # valid_len_w = round(valid_len*1)
     test_len = len(data['test'])
     # pretrain_len = round(len(data['pretrain'])/10)
     pretrain_len = round(len(data['pretrain']))
@@ -15,7 +16,8 @@ def split_dataset():
     #all_images = data['train'] + data['valid'] + data['test'] + data['pretrain']
     #random.shuffle(all_images)
 
-    train_img = data['train']
+    train_sup_img = data['train']
+    train_unsup_img = data_unsup['test']
     valid_img = data['valid']
     test_img = data['test']
     pretrain_img = data['pretrain']
@@ -25,18 +27,21 @@ def split_dataset():
 
    # with open('./data_split_previous.json','w') as jf:
    #     json.dump(data,jf)
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_200test(0.01data).json','w') as jf:
+    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1data_100val_431test_10train_10pretrain.json','w') as jf:
     # with open('./scripts/data_split_100val.json','w') as jf:
-    #     json.dump({'train':train_img[:train_len],
-    #                 'valid':valid_img[:100],
-    #                 'test':test_img[100:test_len],
-    #                 'pretrain':pretrain_img[:pretrain_len]
-    #                 },jf)
-        json.dump({'train': [],
-                   'valid':[],
-                   'test': test_img[:200],
-                   'pretrain': []
-                   }, jf)
+        json.dump({'train':train_sup_img[:10],
+                    # 'train_unsup': train_unsup_img[:train_unsup_len],
+                    # 'valid':valid_img[:100],
+                    # 'test':test_img[100:test_len],
+                   'valid': valid_img[:valid_len],
+                   'test': test_img[:test_len],
+                    'pretrain':train_sup_img[10:]
+                    },jf)
+        # json.dump({'train': [],
+        #            'valid':[],
+        #            'test': test_img[:200],
+        #            'pretrain': []
+        #            }, jf)
     # random.shuffle(valid_img)
     # with open('./scripts/data_split_w_val.json','w') as jf:
     #     json.dump({'train':train_img[:train_len],
@@ -44,11 +49,11 @@ def split_dataset():
     #                 'test':test_img[:test_len],
     #                 'pretrain':pretrain_img[:pretrain_len]
     #                 },jf)
-    print("train_len", train_len)
-    print("valid_len",valid_len)
-    print('"valid_len', valid_len)
-    print("test_len", test_len)
-    print("pretrain_len", pretrain_len)
+    # print("train_sup_len", train_len)
+    # print("train_unsup_len",train_unsup_len)
+    # print('"valid_len', valid_len)
+    # print("test_len", test_len)
+    # print("pretrain_len", pretrain_len)
 
 split_dataset()
 
