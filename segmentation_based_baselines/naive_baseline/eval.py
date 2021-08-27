@@ -5,8 +5,8 @@ from PIL import Image
 import os 
 import numpy as np
 from sklearn.metrics import average_precision_score
-from dice_loss import dice_coeff
-from utils.skeleton import soft_skel
+from losses.dice_loss import dice_coeff
+from models.skeleton import soft_skel
 from models.gabore_filter_bank import GaborFilters
 
 # def crop(data):
@@ -44,21 +44,21 @@ def eval_net(args,net,loader, device):
             for batch in loader:
                 # img [b, n, c, h, w], [b, n, 3, 1300, 1300]
                 img, mask, name = batch['image'], batch['mask'],batch['name']
-                # img = img.to(device=device, dtype=torch.float32)
+                img = img.to(device=device, dtype=torch.float32)
                 mask = mask.to(device=device, dtype=torch.float32)
 
-                b, n, c, w, h = img.shape
+                b, n, c, h, w = img.shape
                 mask_pred_list = []
                 mask_save_list = []
                 for idx in range(n):
-                    rotated_img = img[:, idx, :, :, :] # [b, 1, 3, 1300, 1300]
-                    rotated_img = torch.squeeze(rotated_img, axis=1) # [b, 3, 1300, 1300]
-                    rotated_img = rotated_img.to(device=device, dtype=torch.float32)
+                    rotated_img = img[:, idx, :, :, :] # [b, idx, 3, 1300, 1300] -> [b, 3, 1300, 1300]
+                    rotated_img = torch.squeeze(rotated_img, axis=1) # [b, 3, 1300, 1300] -> [b, 3, 1300, 1300]
+                    # rotated_img = rotated_img.to(device=device, dtype=torch.float32)
 
                     with torch.no_grad():
-                        rotated_mask_pred = net(rotated_img)
+                        rotated_mask_pred = net(rotated_img)   #[b, 1, 1300, 1300]
                         # rotated_mask_save = torch.sigmoid(rotated_mask_pred).squeeze(0).squeeze(0).cpu().detach().numpy()
-                        rotated_mask_save = torch.sigmoid(rotated_mask_pred).squeeze(0).squeeze(0)
+                        rotated_mask_save = torch.sigmoid(rotated_mask_pred).squeeze(0).squeeze(0)  #[b, 1, 1300, 1300] -> [1300, 1300]
                         if idx == 0:
                             mask_pred_list.append(rotated_mask_pred)
                             mask_save_list.append(rotated_mask_save)
@@ -74,9 +74,12 @@ def eval_net(args,net,loader, device):
                 mask_save = torch.mean(torch.stack(mask_save_list), 0)
 
                 if not args.test:
-                    mask_save = mask_save.cpu().detach().numpy()
-                    Image.fromarray(mask_save / np.max(mask_save) * 255) \
-                        .convert('L').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
+                    # mask_save = mask_save.cpu().detach().numpy()
+                    # mask_max = np.max(mask_save)
+                    # mask_min = np.min(mask_save)
+                    # mask_save = (mask_save - mask_min)/(mask_max - mask_min)
+                    # Image.fromarray(mask_save * 255) \
+                    #     .convert('L').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
                     pred = torch.sigmoid(mask_pred)
                     pred = (pred > 0.1).float()
                     tot += dice_coeff(pred, mask, args).item()
@@ -84,11 +87,15 @@ def eval_net(args,net,loader, device):
                     if args.thr0 == True:
                         mask_save = mask_save.cpu().detach().numpy()
                         mask_max = np.max(mask_save)
-                        Image.fromarray(mask_save / mask_max * 255) \
+                        mask_min = np.min(mask_save)
+                        mask_save = (mask_save - mask_min) / (mask_max - mask_min)
+                        Image.fromarray(mask_save * 255) \
                                     .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
                     else:
                         mask_max = torch.max(mask_save)
-                        tta_thr = args.tta_thr * mask_max
+                        mask_min = torch.min(mask_save)
+                        mask_save = (mask_save - mask_min) / (mask_max - mask_min)
+                        tta_thr = args.tta_thr
                         thr_mask = (mask_save >= tta_thr).float()
                         mask_save = mask_save * thr_mask
 
@@ -112,11 +119,10 @@ def eval_net(args,net,loader, device):
                         # skel_save = np.squeeze(skel.cpu().detach().numpy())
                         # skel_max = np.max(skel_save)
                         # skel_save = (skel_save /skel_max * 255).astype(np.uint8)
-                        # Image.fromarray(skel_save).convert('L').save(os.path.join('./records/test/skeleton', name[0] + '.png'))
+                        # Image.fromarray(skel_save).convert('L').save(os.path.join('./records/test/skeleton_tensor', name[0] + '.png'))
 
                         mask_save_seg = mask_save.cpu().detach().numpy()
-                        mask_max = np.max(mask_save_seg)
-                        Image.fromarray(mask_save_seg / mask_max * 255) \
+                        Image.fromarray(mask_save_seg * 255) \
                                     .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
                     # mask_max = np.max(mask_save)
                     # if args.thr0 == True:
@@ -154,8 +160,11 @@ def eval_net(args,net,loader, device):
                     mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0)
                     if not args.test:
                         mask_save = mask_save.cpu().detach().numpy()
-                        Image.fromarray(mask_save / np.max(mask_save) * 255) \
-                            .convert('RGB').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
+                        mask_max = np.max(mask_save)
+                        mask_min = np.min(mask_save)
+                        mask_save = (mask_save - mask_min) / (mask_max - mask_min)
+                        Image.fromarray(mask_save * 255) \
+                            .convert('L').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
                         pred = torch.sigmoid(mask_pred)
                         pred = (pred > 0.1).float()
                         tot += dice_coeff(pred, mask, args).item()
@@ -163,17 +172,24 @@ def eval_net(args,net,loader, device):
                         if args.thr0 == True:
                             mask_save = mask_save.cpu().detach().numpy()
                             mask_max = np.max(mask_save)
-                            Image.fromarray(mask_save / mask_max * 255) \
+                            mask_min = np.min(mask_save)
+                            mask_save = (mask_save - mask_min) / (mask_max - mask_min)
+                            Image.fromarray(mask_save * 255) \
                                 .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
                         else:
                             mask_max = torch.max(mask_save)
-                            no_tta_thr = args.no_tta_thr * mask_max
+                            mask_min = torch.min(mask_save)
+                            mask_save = (mask_save - mask_min) / (mask_max - mask_min)
+                            no_tta_thr = args.no_tta_thr
                             thr_mask = (mask_save >= no_tta_thr).float()
                             mask_save = mask_save * thr_mask
 
+                            # no_tta_thr = args.no_tta_thr * mask_max
+                            # thr_mask = (mask_save >= no_tta_thr).float()
+                            # mask_save = mask_save * thr_mask
+
                             mask_save_seg = mask_save.cpu().detach().numpy()
-                            mask_max = np.max(mask_save_seg)
-                            Image.fromarray(mask_save_seg / mask_max * 255) \
+                            Image.fromarray(mask_save_seg * 255) \
                                 .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
 
                             # mask_save[(mask_save / mask_max) < args.no_tta_thr] = 0

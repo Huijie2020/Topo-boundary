@@ -22,6 +22,7 @@ from utils.dataset import BasicDataset
 from utils.unsupdataset import UnsupDataset
 from utils.matchdataset import MatchDataset
 from utils.pos_dataset import UnsupDataset_pos
+from utils.neg_dataset import UnsupDataset_neg
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from arguments import get_parser, update_dir_train, update_dir_test, update_dir_resume, update_dir_match
@@ -90,11 +91,12 @@ def train_semi_net(net,
               device):
 
     sup_train = BasicDataset(args,False)
-    unsup_train = UnsupDataset_pos(args)
+    unsup_pos_train = UnsupDataset_pos(args)
+    unsup_neg_train = UnsupDataset_neg(args)
     val = BasicDataset(args,True)
 
     iter_per_epoch = args.iter_per_epoch
-    n_train = len(unsup_train)
+    n_train = len(unsup_pos_train)
     #
     writer = SummaryWriter('./records/tensorboard')
     optimizer = optim.Adam(net.parameters(), lr=lr)
@@ -138,8 +140,9 @@ def train_semi_net(net,
     for epoch in range(start_epoch + 1, epochs):
         # load supervised and unsupervised data
         sup_train_loader = DataLoader(sup_train, batch_size=sup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
-        unsup_train_loader = DataLoader(unsup_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
-        train_loader = iter(zip(cycle(sup_train_loader), cycle(unsup_train_loader)))
+        unsup_train_pos_loader = DataLoader(unsup_pos_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
+        unsup_train_neg_loader = DataLoader(unsup_neg_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
+        train_loader = iter(zip(cycle(sup_train_loader), cycle(unsup_train_pos_loader), cycle(unsup_train_neg_loader)))
         tbar = tqdm(range(args.iter_per_epoch), desc=f'Epoch {epoch + 1}/{epochs}', ncols=135)
 
         print('learning rate **********************:', optimizer.state_dict()['param_groups'][0]['lr'])
@@ -148,7 +151,7 @@ def train_semi_net(net,
 
         for batch_idx in tbar:
             # load data
-            sup_l, unsup_l = next(train_loader)
+            sup_l, unsup_pos_l, unsup_neg_l = next(train_loader)
 
             image_l, mask_l, name_l = sup_l['image'], sup_l['mask'], sup_l['name']
             image_l, mask_l = image_l.to(device=device, dtype=torch.float32), mask_l.to(device=device, dtype=torch.float32)
@@ -157,11 +160,17 @@ def train_semi_net(net,
             # image_ul, mask_ul, overlap1_ul, overlap2_ul, overlap3_ul, overlap4_ul, flip_rotate_1, flip_rotate_2, flip_rotate_3, flip_rotate_4, name = \
             #     unsup_l['image'], unsup_l['mask'], unsup_l['overlap1_ul'], unsup_l['overlap2_ul'], unsup_l['overlap3_ul'], unsup_l['overlap4_ul'], \
             #     unsup_l['flip_rotate_1'], unsup_l['flip_rotate_2'], unsup_l['flip_rotate_3'], unsup_l['flip_rotate_4'], unsup_l['name']
-            image_ul, mask_ul, overlap1_ul, overlap2_ul, flip_rotate_1, flip_rotate_2, name = \
-                unsup_l['image'], unsup_l['mask'], unsup_l['overlap1_ul'], unsup_l['overlap2_ul'], \
-                unsup_l['flip_rotate_1'], unsup_l['flip_rotate_2'], unsup_l['name']
-            image_ul, mask_ul = image_ul.to(device=device, dtype=torch.float32), mask_ul.to(device=device, dtype=torch.float32)
-            image_ul, mask_ul = image_ul.cuda(non_blocking=True), mask_ul.cuda(non_blocking=True)
+            image_pos_ul, mask_pos_ul, overlap1_pos_ul, overlap2_pos_ul, flip_rotate_pos_1, flip_rotate_pos_2, name_pos = \
+                unsup_pos_l['image'], unsup_pos_l['mask'], unsup_pos_l['overlap1_ul'], unsup_pos_l['overlap2_ul'], \
+                unsup_pos_l['flip_rotate_1'], unsup_pos_l['flip_rotate_2'], unsup_pos_l['name']
+            image_neg_ul, mask_neg_ul, overlap1_neg_ul, overlap2_neg_ul, flip_rotate_neg_1, flip_rotate_neg_2, name_neg = \
+                unsup_neg_l['image'], unsup_neg_l['mask'], unsup_neg_l['overlap1_ul'], unsup_neg_l['overlap2_ul'], \
+                unsup_neg_l['flip_rotate_1'], unsup_neg_l['flip_rotate_2'], unsup_neg_l['name']
+
+            image_pos_ul, mask_pos_ul = image_pos_ul.to(device=device, dtype=torch.float32), mask_pos_ul.to(device=device, dtype=torch.float32)
+            image_pos_ul, mask_pos_ul = image_pos_ul.cuda(non_blocking=True), mask_pos_ul.cuda(non_blocking=True)
+            image_neg_ul, mask_neg_ul = image_neg_ul.to(device=device, dtype=torch.float32), mask_neg_ul.to(device=device, dtype=torch.float32)
+            image_neg_ul, mask_neg_ul = image_neg_ul.cuda(non_blocking=True), mask_neg_ul.cuda(non_blocking=True)
 
             optimizer.zero_grad()
 
@@ -186,58 +195,53 @@ def train_semi_net(net,
 
                 # unsupervised net
                 # image_ul: [batch_size, 4, 3, H, W]
-                image_ul1 = image_ul[:, 0, :, :, :] # [batch_size, 3, H, W]
-                image_ul2 = image_ul[:, 1, :, :, :]
-                # image_ul3 = image_ul[:, 2, :, :, :]
-                # image_ul4 = image_ul[:, 3, :, :, :]
+                image_pos_ul1 = image_pos_ul[:, 0, :, :, :] # [batch_size, 3, H, W]
+                image_pos_ul2 = image_pos_ul[:, 1, :, :, :]
+                image_neg_ul1 = image_neg_ul[:, 0, :, :, :] # [batch_size, 3, H, W]
+                image_neg_ul2 = image_neg_ul[:, 1, :, :, :]
+
 
                 # Unet, skeleton, gabor
-                net_unsup1_pre = net(image_ul1) # [batch_size, 1, H, W]
-                # # thr 0.1 for skeleton
-                net_unsup1_pre = normal_thr_output(net_unsup1_pre, args.unsup_thr_ske_train) # [batch_size, 1, H, W]
-                # net_unsup1_pre = soft_skel(net_unsup1_pre, 10)
-                # # gabor
-                # net_unsup1_pre = garbo_filter(net_unsup1_pre)
+                net_pos_unsup1_pre = net(image_pos_ul1) # [batch_size, 1, H, W]
+                net_pos_unsup1_pre = normal_thr_output(net_pos_unsup1_pre, args.unsup_thr_ske_train) # [batch_size, 1, H, W]
 
-                net_unsup2_pre = net(image_ul2)
-                net_unsup2_pre = normal_thr_output(net_unsup2_pre, args.unsup_thr_ske_train)
-                # net_unsup2_pre = soft_skel(net_unsup2_pre, 10)
-                # net_unsup2_pre = garbo_filter(net_unsup2_pre)
+                net_pos_unsup2_pre = net(image_pos_ul2)
+                net_pos_unsup2_pre = normal_thr_output(net_pos_unsup2_pre, args.unsup_thr_ske_train)
 
-                # net_unsup3_pre = net(image_ul3)
-                # net_unsup3_pre = normal_thr_output(net_unsup3_pre, args.unsup_thr_ske_train)
-                # net_unsup3_pre = soft_skel(net_unsup3_pre, 10)
-                # net_unsup3_pre = garbo_filter(net_unsup3_pre)
+                net_neg_unsup1_pre = net(image_neg_ul1) # [batch_size, 1, H, W]
+                net_neg_unsup1_pre = normal_thr_output(net_neg_unsup1_pre, args.unsup_thr_ske_train) # [batch_size, 1, H, W]
 
-                # net_unsup4_pre = net(image_ul4)
-                # net_unsup4_pre = normal_thr_output(net_unsup4_pre, args.unsup_thr_ske_train)
-                # net_unsup4_pre = soft_skel(net_unsup4_pre, 10)
-                # net_unsup4_pre = garbo_filter(net_unsup4_pre)
+                net_neg_unsup2_pre = net(image_neg_ul2)
+                net_neg_unsup2_pre = normal_thr_output(net_neg_unsup2_pre, args.unsup_thr_ske_train)
+
 
                 # get overlap part
-                overlap_unsup1_list = []
-                overlap_unsup2_list = []
-                # overlap_unsup3_list = []
-                # overlap_unsup4_list = []
-                for idx in range(net_unsup1_pre.size(0)):
-                    net_unsup1_back_idx = flip_rotate_back(net_unsup1_pre, flip_rotate_1, idx) # [1, 384, 384]
-                    overlap_unsup1_list.append(net_unsup1_back_idx[:, int(overlap1_ul[0][idx]):int(overlap1_ul[0][idx])+args.unsup_crop_in_size, int(overlap1_ul[1][idx]):int(overlap1_ul[1][idx])+args.unsup_crop_in_size]) # [1, 256, 256]
+                overlap_pos_unsup1_list = []
+                overlap_pos_unsup2_list = []
+                overlap_neg_unsup1_list = []
+                overlap_neg_unsup2_list = []
 
-                    net_unsup2_back_idx = flip_rotate_back(net_unsup2_pre, flip_rotate_2, idx)
-                    overlap_unsup2_list.append(net_unsup2_back_idx[:, int(overlap2_ul[0][idx]):int(overlap2_ul[0][idx])+args.unsup_crop_in_size, int(overlap2_ul[1][idx]):int(overlap2_ul[1][idx])+args.unsup_crop_in_size])
+                for idx in range(net_pos_unsup1_pre.size(0)):
+                    net_pos_unsup1_back_idx = flip_rotate_back(net_pos_unsup1_pre, flip_rotate_pos_1, idx) # [1, 384, 384]
+                    overlap_pos_unsup1_list.append(net_pos_unsup1_back_idx[:, int(overlap1_pos_ul[0][idx]):int(overlap1_pos_ul[0][idx])+args.unsup_crop_in_size, int(overlap1_pos_ul[1][idx]):int(overlap1_pos_ul[1][idx])+args.unsup_crop_in_size]) # [1, 256, 256]
+                    net_pos_unsup2_back_idx = flip_rotate_back(net_pos_unsup2_pre, flip_rotate_pos_2, idx)
+                    overlap_pos_unsup2_list.append(net_pos_unsup2_back_idx[:, int(overlap2_pos_ul[0][idx]):int(overlap2_pos_ul[0][idx])+args.unsup_crop_in_size, int(overlap2_pos_ul[1][idx]):int(overlap2_pos_ul[1][idx])+args.unsup_crop_in_size])
 
-                    # net_unsup3_back_idx = flip_rotate_back(net_unsup3_pre, flip_rotate_3, idx)
-                    # overlap_unsup3_list.append(net_unsup3_back_idx[:, int(overlap3_ul[0][idx]):int(overlap3_ul[0][idx])+args.unsup_crop_in_size, int(overlap3_ul[1][idx]):int(overlap3_ul[1][idx])+args.unsup_crop_in_size])
-                    #
-                    # net_unsup4_back_idx = flip_rotate_back(net_unsup4_pre, flip_rotate_4, idx)
-                    # overlap_unsup4_list.append(net_unsup4_back_idx[:, int(overlap4_ul[0][idx]):int(overlap4_ul[0][idx])+args.unsup_crop_in_size, int(overlap4_ul[1][idx]):int(overlap4_ul[1][idx])+args.unsup_crop_in_size])
+                for idx in range(net_neg_unsup1_pre.size(0)):
+                    net_neg_unsup1_back_idx = flip_rotate_back(net_neg_unsup1_pre, flip_rotate_neg_1, idx) # [1, 384, 384]
+                    overlap_neg_unsup1_list.append(net_neg_unsup1_back_idx[:, int(overlap1_neg_ul[0][idx]):int(overlap1_neg_ul[0][idx])+args.unsup_crop_in_size, int(overlap1_neg_ul[1][idx]):int(overlap1_neg_ul[1][idx])+args.unsup_crop_in_size]) # [1, 256, 256]
+                    net_neg_unsup2_back_idx = flip_rotate_back(net_neg_unsup2_pre, flip_rotate_neg_2, idx)
+                    overlap_neg_unsup2_list.append(net_neg_unsup2_back_idx[:, int(overlap2_neg_ul[0][idx]):int(overlap2_neg_ul[0][idx])+args.unsup_crop_in_size, int(overlap2_neg_ul[1][idx]):int(overlap2_neg_ul[1][idx])+args.unsup_crop_in_size])
 
-                overlap_unsup1 = torch.cat(overlap_unsup1_list, 0).unsqueeze(1)  # [2, 1, 256, 256]
+                overlap_pos_unsup1 = torch.cat(overlap_pos_unsup1_list, 0).unsqueeze(1)  # [1, 1, 256, 256]
+                overlap_neg_unsup1 = torch.cat(overlap_neg_unsup1_list, 0).unsqueeze(1)  # [1, 1, 256, 256]
+                overlap_unsup1 = torch.cat((overlap_pos_unsup1, overlap_neg_unsup1), 0)  # [2, 1, 256, 256]
                 hog_overlap_unsup1= hog(overlap_unsup1)                          # [2, 12, 32, 32]
-                overlap_unsup2 = torch.cat(overlap_unsup2_list, 0).unsqueeze(1)
+
+                overlap_pos_unsup2 = torch.cat(overlap_pos_unsup2_list, 0).unsqueeze(1)  # [1, 1, 256, 256]
+                overlap_neg_unsup2 = torch.cat(overlap_neg_unsup2_list, 0).unsqueeze(1)  # [1, 1, 256, 256]
+                overlap_unsup2 = torch.cat((overlap_pos_unsup2, overlap_neg_unsup2), 0)  # [2, 1, 256, 256]
                 hog_overlap_unsup2= hog(overlap_unsup2)
-                # overlap_unsup3 = torch.cat(overlap_unsup3_list, 0)  # [2, 256, 256]
-                # overlap_unsup4 = torch.cat(overlap_unsup4_list, 0)
 
                 # loss_unsup = criterion_var(overlap_unsup1, overlap_unsup2, overlap_unsup3, overlap_unsup4) * args.loss_unsup_var_weight
                 loss_unsup = criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2) * args.loss_unsup_var_weight

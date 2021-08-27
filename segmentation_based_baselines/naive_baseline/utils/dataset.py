@@ -201,20 +201,27 @@ class BasicDataset(Dataset):
 
         # random crop image and traning data argumentation
         if (not self.test) and (not self.valid):
-            if idx in self.sup20:
-                if self.data_augumentation:
-                    img, mask = self.random_crop(img, mask, self.crop_size)
-                    img, mask = self.data_augu(img, mask)
-                else:
-                    img, mask = self.random_crop(img, mask, self.crop_size)
-                    img = np.array(img)
-                    mask = np.array(mask)
+            if self.data_augumentation:
+                img, mask = self.random_crop(img, mask, self.crop_size)
+                img, mask = self.data_augu(img, mask)
             else:
-                if self.data_augumentation:
-                    img, mask = self.data_augu(img, mask)
-                else:
-                    img = np.array(img)
-                    mask = np.array(mask)
+                img, mask = self.random_crop(img, mask, self.crop_size)
+                img = np.array(img)
+                mask = np.array(mask)
+            # if idx in self.sup20:
+            #     if self.data_augumentation:
+            #         img, mask = self.random_crop(img, mask, self.crop_size)
+            #         img, mask = self.data_augu(img, mask)
+            #     else:
+            #         img, mask = self.random_crop(img, mask, self.crop_size)
+            #         img = np.array(img)
+            #         mask = np.array(mask)
+            # else:
+            #     if self.data_augumentation:
+            #         img, mask = self.data_augu(img, mask)
+            #     else:
+            #         img = np.array(img)
+            #         mask = np.array(mask)
 
         # # np.array test and valid
         # if (self.test) or (self.valid):

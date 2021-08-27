@@ -22,7 +22,6 @@ from utils.dataset import BasicDataset
 from utils.unsupdataset import UnsupDataset
 from utils.matchdataset import MatchDataset
 from utils.pos_dataset import UnsupDataset_pos
-from utils.neg_dataset import UnsupDataset_neg
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from arguments import get_parser, update_dir_train, update_dir_test, update_dir_resume, update_dir_match
@@ -91,7 +90,7 @@ def train_semi_net(net,
               device):
 
     sup_train = BasicDataset(args,False)
-    unsup_train = UnsupDataset(args)
+    unsup_train = UnsupDataset_pos(args)
     val = BasicDataset(args,True)
 
     iter_per_epoch = args.iter_per_epoch
@@ -237,6 +236,8 @@ def train_semi_net(net,
                 hog_overlap_unsup1= hog(overlap_unsup1)                          # [2, 12, 32, 32]
                 overlap_unsup2 = torch.cat(overlap_unsup2_list, 0).unsqueeze(1)
                 hog_overlap_unsup2= hog(overlap_unsup2)
+                # overlap_unsup3 = torch.cat(overlap_unsup3_list, 0)  # [2, 256, 256]
+                # overlap_unsup4 = torch.cat(overlap_unsup4_list, 0)
 
                 # loss_unsup = criterion_var(overlap_unsup1, overlap_unsup2, overlap_unsup3, overlap_unsup4) * args.loss_unsup_var_weight
                 loss_unsup = criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2) * args.loss_unsup_var_weight
@@ -298,8 +299,7 @@ def train_semi_net(net,
 def skeleton(args):
     print('Start skeletonization...')
     with open('./dataset/data_split.json','r') as jf:
-        # json_data = json.load(jf)['test']
-        json_data = json.load(jf)['overlap_id']
+        json_data = json.load(jf)['test']
     skel_list = [x+'.png' for x in json_data]
     with tqdm(total=len(skel_list), unit='img') as pbar:
         # thr = 0.2
@@ -393,7 +393,7 @@ if __name__ == '__main__':
             test = BasicDataset(args)
             test_loader = DataLoader(test, batch_size=1, shuffle=False,  pin_memory=True, drop_last=False)
             eval_net(args,net, test_loader, device)
-            # skeleton(args)
+            skeleton(args)
 
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')

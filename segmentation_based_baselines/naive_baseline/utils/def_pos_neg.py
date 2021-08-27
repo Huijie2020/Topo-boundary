@@ -16,60 +16,60 @@ source_train_json = '/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data
 tar_pos_neg_json = '/mnt/git/Topo-boundary/conn_experiment/expriment/06152021_unet_baseline_0.01data_24batch_0.01lr_25500epoch/exp1.2_best_thr0_ta_tta_iter/iter1_0628/def_pos_neg/pos_neg.json'
 tar_total_json = '/mnt/git/Topo-boundary/conn_experiment/expriment/06152021_unet_baseline_0.01data_24batch_0.01lr_25500epoch/exp1.2_best_thr0_ta_tta_iter/iter1_0628/def_pos_neg/total_crop_score.json'
 
-# def random_crop(ske, size):
-#     w, h = ske.size
-#     newW, newH = int(w), int(h)
-#     assert newW > 0 and newH > 0, 'Scale is too small'
-#     ske = ske.resize((newW, newH))
-#
-#     crop_h = size
-#     crop_w = size
-#
-#     start_x = np.random.randint(1, w - crop_w - 1)
-#     start_y = np.random.randint(1, h - crop_h - 1)
-#
-#     ske_nd = np.array(ske)
-#
-#     ske_nd = ske_nd[start_y: start_y + crop_h, start_x: start_x + crop_w]
-#
-#     return ske_nd, start_y, start_x
-#
-# with open(source_json,'r') as jf:
-#     data = json.load(jf)
-# jf.close()
-# test_img = data['test']
-#
-# progress_bar = tqdm(test_img, ncols=150)
-# total = []
-# total_score = []
-# for idx in progress_bar:
-#     ske_file = os.path.join(source_ske_dir, idx + '.png')
-#     ske = Image.open(ske_file)
-#
-#     crop_ul = []
-#     crop_score = []
-#     ske_dic = {}
-#
-#     for i in range(20):
-#         ske_nd, start_y, start_x = random_crop(ske, 256)
-#         ske_score = np.count_nonzero(ske_nd)
-#         crop_ul.append([start_y, start_x])
-#         crop_score.append(ske_score)
-#         total_score.append(ske_score)
-#
-#         # ske_i_name = idx + '_' + str(i)
-#         # Image.fromarray(ske_nd).save(os.path.join(tar_total_dir, ske_i_name + '.png'))
-#
-#     ske_dic["file_name"] = idx
-#     ske_dic["crop_ul"] = crop_ul
-#     ske_dic["crop_score"] = crop_score
-#     total.append(ske_dic)
-#
-# with open(tar_total_json,'w') as jf:
-#     json.dump({'total': total[:len(total)],
-#                'total_ske_score':total_score
-#                }, jf)
-# jf.close()
+def random_crop(ske, size):
+    w, h = ske.size
+    newW, newH = int(w), int(h)
+    assert newW > 0 and newH > 0, 'Scale is too small'
+    ske = ske.resize((newW, newH))
+
+    crop_h = size
+    crop_w = size
+
+    start_x = np.random.randint(1, w - crop_w - 1)
+    start_y = np.random.randint(1, h - crop_h - 1)
+
+    ske_nd = np.array(ske)
+
+    ske_nd = ske_nd[start_y: start_y + crop_h, start_x: start_x + crop_w]
+
+    return ske_nd, start_y, start_x
+
+with open(source_json,'r') as jf:
+    data = json.load(jf)
+jf.close()
+test_img = data['test']
+
+progress_bar = tqdm(test_img, ncols=150)
+total = []
+total_score = []
+for idx in progress_bar:
+    ske_file = os.path.join(source_ske_dir, idx + '.png')
+    ske = Image.open(ske_file)
+
+    crop_ul = []
+    crop_score = []
+    ske_dic = {}
+
+    for i in range(20):
+        ske_nd, start_y, start_x = random_crop(ske, 256)
+        ske_score = np.count_nonzero(ske_nd)
+        crop_ul.append([start_y, start_x])
+        crop_score.append(ske_score)
+        total_score.append(ske_score)
+
+        # ske_i_name = idx + '_' + str(i)
+        # Image.fromarray(ske_nd).save(os.path.join(tar_total_dir, ske_i_name + '.png'))
+
+    ske_dic["file_name"] = idx
+    ske_dic["crop_ul"] = crop_ul
+    ske_dic["crop_score"] = crop_score
+    total.append(ske_dic)
+
+with open(tar_total_json,'w') as jf:
+    json.dump({'total': total[:len(total)],
+               'total_ske_score':total_score
+               }, jf)
+jf.close()
 
 
 
