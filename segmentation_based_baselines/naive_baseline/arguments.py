@@ -56,8 +56,9 @@ def update_dir_test(args):
     check_and_add_dir('./records/test/graph',clear=False)
 
 def update_dir_match(args):
-    check_and_add_dir('./records/test/match_image')
-    check_and_add_dir('./records/test/match_gt')
-    check_and_add_dir('./records/test/segmentation_seperate')
-    check_and_add_dir('./records/test/segmentation_overlap')
+    check_and_add_dir('./records/test/match_image',clear=False)
+    check_and_add_dir('./records/test/match_gt',clear=False)
+    check_and_add_dir('./records/test/segmentation_seperate',clear=False)
+    check_and_add_dir('./records/test/segmentation_overlap',clear=False)
+    check_and_add_dir('./records/test/skeleton',clear=False)
 

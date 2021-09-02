@@ -21,19 +21,30 @@ def match_net(args,net, hog, loader, device):
         criterion_MSE = nn.MSELoss()
         image_name = []
         image_mse = []
+        overlap_img_ul_list = []
         for epoch in range(0, epochs):
             with tqdm(total=n_val, desc=f'Match Epoch {epoch + 1}/{epochs}', unit='img', leave=False) as pbar:
                 for batch in loader:
                     # img [b, i, n, c, h, w], [b, 4, n, 3, 1300, 1300]
-                    img, mask, overlap1_ul, overlap2_ul, overlap3_ul, overlap4_ul, image1_ul, image2_ul, image3_ul, image4_ul, name = \
+                    img, mask, overlap1_ul, overlap2_ul, overlap3_ul, overlap4_ul, image1_ul, image2_ul, image3_ul, image4_ul, overlap_img_ul, name = \
                         batch['image'], batch['mask'], batch['overlap1_ul'], batch['overlap2_ul'], batch['overlap3_ul'], batch['overlap4_ul'], \
-                        batch['image1_ul'], batch['image2_ul'], batch['image3_ul'], batch['image4_ul'], batch['name']
+                        batch['image1_ul'], batch['image2_ul'], batch['image3_ul'], batch['image4_ul'], batch['overlap_img_ul'], batch['name']
+
+                    overlap_img_ul_0 = overlap_img_ul[0].detach().cpu().numpy()
+                    overlap_img_ul_1 = overlap_img_ul[1].detach().cpu().numpy()
+                    overlap_img_ul = [overlap_img_ul_0[0], overlap_img_ul_1[0]]
+                    with open('./records/test/overlap_img_ul.txt', 'a') as name_file:
+                        name_file.write(str(overlap_img_ul))
+                        name_file.write('\n')
+                    overlap_img_ul_list.append(overlap_img_ul)
+
                     # img, mask, name = batch['image'], batch['mask'],batch['name']
                     overlap_ul = [overlap1_ul, overlap2_ul, overlap3_ul, overlap4_ul]
                     img = img.to(device=device, dtype=torch.float32)
                     mask = mask.to(device=device, dtype=torch.float32)
 
-                    name_epoch = name[0] + '_epoch' + str(epoch+1)
+                    # name_epoch = name[0] + '_epoch' + str(epoch+1)
+                    name_epoch = name[0] + '_' + str(epoch+1)
                     image_name.append(name_epoch)
                     with open('./records/test/name.txt', 'a') as name_file:
                         name_file.write(name_epoch)
@@ -95,13 +106,13 @@ def match_net(args,net, hog, loader, device):
                         mask_overlap_save = mask_save[int(overlap_ul[idx_img][0]):int(overlap_ul[idx_img][0]) + args.unsup_crop_in_size,int(overlap_ul[idx_img][1]):int(overlap_ul[idx_img][1]) + args.unsup_crop_in_size] #[256, 256]
                         overlap_save_list.append(mask_overlap_save) #[4, 256, 256]
 
-                        # save seperate patch
-                        mask_save_seg = mask_save.cpu().detach().numpy()
-                        mask_max = np.max(mask_save_seg)
-                        mask_min = np.min(mask_save_seg)
-                        mask_save_seg = (mask_save_seg - mask_min) / (mask_max - mask_min)
-                        Image.fromarray(mask_save_seg * 255) \
-                            .convert('L').save(os.path.join('./records/test/segmentation_seperate', name_epoch + '_idx' + str(idx_img) + '.png'))
+                        # # save seperate patch
+                        # mask_save_seg = mask_save.cpu().detach().numpy()
+                        # mask_max = np.max(mask_save_seg)
+                        # mask_min = np.min(mask_save_seg)
+                        # mask_save_seg = (mask_save_seg - mask_min) / (mask_max - mask_min)
+                        # Image.fromarray(mask_save_seg * 255) \
+                        #     .convert('L').save(os.path.join('./records/test/segmentation_seperate', name_epoch + '_idx' + str(idx_img) + '.png'))
 
                     # save overlap
                     overlap_save = torch.mean(torch.stack(overlap_save_list), 0)
@@ -128,7 +139,7 @@ def match_net(args,net, hog, loader, device):
                     mse_12 = criterion_MSE(hog_overlap_list[1], hog_overlap_list[2])
                     mse_13 = criterion_MSE(hog_overlap_list[1], hog_overlap_list[3])
                     mse_23 = criterion_MSE(hog_overlap_list[2], hog_overlap_list[3])
-                    mse = mse_01 + mse_02 + mse_03 + mse_12 + mse_13 + mse_23
+                    mse = (mse_01 + mse_02 + mse_03 + mse_12 + mse_13 + mse_23)/6
                     mse_np = mse.cpu().detach().item()
                     with open('./records/test/mse.txt', 'a') as the_file:
                         the_file.write(str(mse_np))
@@ -136,10 +147,11 @@ def match_net(args,net, hog, loader, device):
                     image_mse.append(mse_np)
 
                     pbar.update()
-        with open('./records/test/mse.json','w') as jf:
+        with open('./records/test/100epoch_256_20000img.json','w') as jf:
             # with open('./scripts/data_split_100val.json','w') as jf:
             json.dump({'img_id': image_name[:len(image_name)],
-                       'mse': image_mse[:len(image_mse)]
+                       'mse': image_mse[:len(image_mse)],
+                       'overlap_ul':overlap_img_ul_list
                        }, jf)
 
     if args.tta == False:

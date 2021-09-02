@@ -68,6 +68,7 @@ class MatchDataset(Dataset):
         # inside crop upperleft location
         x_in_ul = np.random.randint(1, w - crop_in_w - 1)
         y_in_ul = np.random.randint(1, h - crop_in_h - 1)
+        overlap_img_ul = [y_in_ul, x_in_ul]
         # # inside crop image
         # image_in_nd = image_nd[y_in_ul: y_in_ul + crop_in_h, x_in_ul: x_in_ul + crop_in_w, :]
         # mask_in_nd = mask_nd[y_in_ul: y_in_ul + crop_in_h, x_in_ul: x_in_ul + crop_in_w]
@@ -90,7 +91,7 @@ class MatchDataset(Dataset):
         image4, mask4, image4_ul, overlap4_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
                                                    crop_in_h, crop_in_w, crop_out_h, crop_out_w)
 
-        return image1, mask1, image1_ul, overlap1_ul, image2, mask2, image2_ul, overlap2_ul, image3, mask3, image3_ul, overlap3_ul, image4, mask4, image4_ul, overlap4_ul
+        return image1, mask1, image1_ul, overlap1_ul, image2, mask2, image2_ul, overlap2_ul, image3, mask3, image3_ul, overlap3_ul, image4, mask4, image4_ul, overlap4_ul, overlap_img_ul
 
     # rotation image [0, 90, 180, 270]
     def rotate_img(self, image, mask):
@@ -152,7 +153,8 @@ class MatchDataset(Dataset):
         mask = Image.open(mask_file)
 
         # random crop image and traning data augumentation
-        image1, mask1, image1_ul, overlap1_ul, image2, mask2, image2_ul, overlap2_ul, image3, mask3, image3_ul, overlap3_ul, image4, mask4, image4_ul, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+        image1, mask1, image1_ul, overlap1_ul, image2, mask2, image2_ul, overlap2_ul, image3, mask3, image3_ul, overlap3_ul, image4, mask4, image4_ul, overlap4_ul, overlap_img_ul = \
+            self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
         # rotate test image and save as list
         if self.tta:
             image1, mask1 = self.rotate_img(image1, mask1)
@@ -189,5 +191,6 @@ class MatchDataset(Dataset):
             'image2_ul': image2_ul,
             'image3_ul': image3_ul,
             'image4_ul': image4_ul,
+            'overlap_img_ul': overlap_img_ul,
             'name':idx
         }
