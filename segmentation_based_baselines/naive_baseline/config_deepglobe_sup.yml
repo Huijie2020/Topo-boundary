@@ -1,33 +1,14 @@
 # device 
 device: 'cuda:0'
 
-# training params
-#epochs: 10 # number of epochs
-#batch_size: 1
-#lr: 0.0001 # learning rate
-#epochs: 255 # number of epochs
-#epochs: 60 # (data_split_sup2020_unsup1998_growing_iter1), iter_per_epoch: 999, [80, 90], lr 0.00005 [40] finetune
-epochs: 120 # spacenet: number of epochs,(data_split_1data_pseudo1998_sup5994_unsup1998, data_split_1data_99unsup_100val_431test_5994sup) [80, 100], iter_per_epoch: 999, lr 0.0005
-#epochs: 100 # predict 200 img growing
-#epochs: 80 # number of epochs data_split_1data_9990add_10010total_99unsup_100val_431test_10010totalsup [60, 70], iter_per_epoch: 1669, lr 0.0005
-#epochs: 220 # number of epochs data_split_1data_1055pos_3168sup [150, 190],iter_per_epoch: 528, lr 0.0005
-#iter_per_epoch: 528
-iter_per_epoch: 999
-iter_start_unsup: 1998
-#batch_size: 24
-#lr: 0.001 # learning rate
+epochs: 400 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [40, 50], iter_per_epoch: 2226, lr 0.0005
+
+
 lr: 0.0005 # learning rate, training from the beginning
-#lr: 0.00005 # learning rate finetune
 gamma: 0.1 # learning drop
-lr_steps: [80, 100]
-# lr 0.01, 0.001, 0.0001
-# 1% data epochs: 7500, 18000, 25500
-# 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
-# 1% data hog semi epochs iter1: 20, 25, 30 (4000 iter/epoch)
-# 5% data epochs: 1500, 3600, 5100
-# 10% data epochs: [1200, 2200, 3300], [750, 1800, 2550]
-# 100% data epochs: 250, 600, 850
-# 100% data 30% epochs: 75, 180, 255
+lr_steps: [150, 300]
+# 100% data epochs: spacenet 250, 600, 850, deepglobe: 150, 300, 400
+
 
 # dataset
 #crop_size: 256
@@ -60,7 +41,7 @@ load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load
 # resume
 resume: False # whether resume
 whether_fintune: False
-resume_epoch: 80
+resume_epoch: 1
 
 # match
 match: False # whether resume
@@ -91,11 +72,11 @@ loss_unsup_var_weight: 1
 # test setting
 thr0: True # whether use threshold = 0 for prediction
 tta: True # whether test-time argumentation
-tta_thr: 0. # threshold for prediction with tta
+tta_thr: 0.129 # threshold for prediction with tta
 no_tta_thr: 0. # threshold for prediction without tta
 
 # skeleton threshold
-skeleton_thr: 0.
+skeleton_thr: 0.129
 skeleton_ig_line: 30
 
 # docker 

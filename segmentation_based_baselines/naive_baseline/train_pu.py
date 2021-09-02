@@ -251,35 +251,11 @@ def train_semi_net(net,
                 # image_ul4 = image_ul[:, 3, :, :, :]
 
                 # Unet, skeleton, gabor
-                net_unsup1_pre = net(image_ul1) # [batch_size, 1, H, W]
                 # # thr 0.1 for skeleton
                 # Pu: should use sigmoid rather than min-max normalization
-                # net_unsup1_pre = normal_thr_output(net_unsup1_pre, args.unsup_thr_ske_train) # [batch_size, 1, H, W]
-                net_unsup1_pre = torch.sigmoid(net_unsup1_pre) # [batch_size, 1, H, W]
-                # net_unsup1_pre = soft_skel(net_unsup1_pre, 10)
-                # # gabor
-                # net_unsup1_pre = garbo_filter(net_unsup1_pre)
 
-                net_unsup2_pre = net(image_ul2)
-                net_unsup2_pre = torch.sigmoid(net_unsup2_pre)
-                # net_unsup2_pre = soft_skel(net_unsup2_pre, 10)
-                # net_unsup2_pre = garbo_filter(net_unsup2_pre)
-
-                # net_unsup3_pre = net(image_ul3)
-                # net_unsup3_pre = normal_thr_output(net_unsup3_pre, args.unsup_thr_ske_train)
-                # net_unsup3_pre = soft_skel(net_unsup3_pre, 10)
-                # net_unsup3_pre = garbo_filter(net_unsup3_pre)
-
-                # net_unsup4_pre = net(image_ul4)
-                # net_unsup4_pre = normal_thr_output(net_unsup4_pre, args.unsup_thr_ske_train)
-                # net_unsup4_pre = soft_skel(net_unsup4_pre, 10)
-                # net_unsup4_pre = garbo_filter(net_unsup4_pre)
-
-                # get overlap part
-                overlap_unsup1_list = []
-                overlap_unsup2_list = []
-                # overlap_unsup3_list = []
-                # overlap_unsup4_list = []
+                net_unsup1_pre = torch.sigmoid(net(image_ul1)) # [batch_size, 1, H, W]
+                net_unsup2_pre = torch.sigmoid(net(image_ul2))
 
                 net_unsup1_pre = transform_back(net_unsup1_pre, flip_rotate_1)  # [1, 384, 384]
                 net_unsup2_pre = transform_back(net_unsup2_pre, flip_rotate_2)
@@ -287,26 +263,8 @@ def train_semi_net(net,
                 overlap_unsup1 = get_overlap(net_unsup1_pre, overlap1_ul)
                 overlap_unsup2 = get_overlap(net_unsup2_pre, overlap2_ul)
 
-                # for idx in range(net_unsup1_pre.size(0)):
-                #     # Pu: I am not sure if the gradient is correctly propagated by this.
-                #     # net_unsup1_back_idx = flip_rotate_back(net_unsup1_pre, flip_rotate_1, idx) # [1, 384, 384]
-                #     net_unsup1_back_idx = flip_rotate_back(net_unsup1_pre, flip_rotate_1, idx) # [1, 384, 384]
-                #     overlap_unsup1_list.append(net_unsup1_back_idx[:, int(overlap1_ul[0][idx]):int(overlap1_ul[0][idx])+args.unsup_crop_in_size, int(overlap1_ul[1][idx]):int(overlap1_ul[1][idx])+args.unsup_crop_in_size]) # [1, 256, 256]
-                #
-                #     net_unsup2_back_idx = flip_rotate_back(net_unsup2_pre, flip_rotate_2, idx)
-                #     net_unsup2_back_idx = flip_rotate_back(net_unsup2_pre, flip_rotate_2, idx)
-                #     overlap_unsup2_list.append(net_unsup2_back_idx[:, int(overlap2_ul[0][idx]):int(overlap2_ul[0][idx])+args.unsup_crop_in_size, int(overlap2_ul[1][idx]):int(overlap2_ul[1][idx])+args.unsup_crop_in_size])
-
-                    # net_unsup3_back_idx = flip_rotate_back(net_unsup3_pre, flip_rotate_3, idx)
-                    # overlap_unsup3_list.append(net_unsup3_back_idx[:, int(overlap3_ul[0][idx]):int(overlap3_ul[0][idx])+args.unsup_crop_in_size, int(overlap3_ul[1][idx]):int(overlap3_ul[1][idx])+args.unsup_crop_in_size])
-                    #
-                    # net_unsup4_back_idx = flip_rotate_back(net_unsup4_pre, flip_rotate_4, idx)
-                    # overlap_unsup4_list.append(net_unsup4_back_idx[:, int(overlap4_ul[0][idx]):int(overlap4_ul[0][idx])+args.unsup_crop_in_size, int(overlap4_ul[1][idx]):int(overlap4_ul[1][idx])+args.unsup_crop_in_size])
-
-                # overlap_unsup1 = torch.cat(overlap_unsup1_list, 0).unsqueeze(1)  # [2, 1, 256, 256]
-                hog_overlap_unsup1= hog(overlap_unsup1)                          # [2, 12, 32, 32]
-                # overlap_unsup2 = torch.cat(overlap_unsup2_list, 0).unsqueeze(1)
-                hog_overlap_unsup2= hog(overlap_unsup2)
+                hog_overlap_unsup1 = hog(overlap_unsup1)                          # [2, 12, 32, 32]
+                hog_overlap_unsup2 = hog(overlap_unsup2)
 
                 # loss_unsup = criterion_var(overlap_unsup1, overlap_unsup2, overlap_unsup3, overlap_unsup4) * args.loss_unsup_var_weight
                 loss_unsup = criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2) * args.loss_unsup_var_weight
@@ -321,7 +279,7 @@ def train_semi_net(net,
                     overlap = torch.cat([overlap_unsup1, overlap_unsup2], dim=3)
                     overlap = overlap.detach().cpu().permute(0, 2, 3, 1).squeeze().numpy()
                     for i in range(overlap.shape[0]):
-                        cv2.imwrite('train_overlap_%d.jpg' % (i), np.clip(overlap[i, ] * 255, 0, 255).astype(np.uint8))
+                        cv2.imwrite('logs/train_overlap_%d_%d.jpg' % (epoch, i), np.clip(overlap[i, ] * 255, 0, 255).astype(np.uint8))
                     flag = False
 
                 global_step += 1
@@ -365,7 +323,6 @@ def train_semi_net(net,
                 best_valid_socre = valid_score
                 with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
                     f.write(str(best_valid_socre))
-                f.close()
                 torch.save(checkpoint_best,
                            args.checkpoints_dir + 'naive_baseline_best.pth')
 
