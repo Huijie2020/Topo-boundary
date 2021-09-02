@@ -1,6 +1,6 @@
 import json
 import random
-
+#
 def data_count():
     #with open('./data_split.json','r') as jf:
     with open('/mnt/git/Topo-boundary/segmentation_based_baselines/naive_baseline/dataset/data_split.json', 'r') as jf:
@@ -25,3 +25,14 @@ def data_count():
     print("pretrain_len", pretrain_len)
 
 data_count()
+
+
+# def data_count():
+#     with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/growing/iter1_1600image/name_1600from1998.json', 'r') as jf:
+#         data = json.load(jf)
+#     train_sup_len = len(data['name_1600from1998'])
+#
+#     print("train_sup_len", train_sup_len)
+#
+#
+# data_count()
