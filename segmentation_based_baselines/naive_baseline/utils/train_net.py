@@ -92,7 +92,7 @@ def train_net(net,
                 # save checkpoint
                 # if (global_step % (n_train // (batch_size)) == 0):
                 # if (epoch + 1) % 2 == 0:
-                if (global_step % ((n_train // batch_size) + 1) == 0) and (epoch + 1) % 5 == 0:
+                if (global_step % ((n_train // batch_size) + 1) == 0) and (epoch + 1) % 10 == 0:
                     # svae validation and plot
                     valid_score = eval_net(args,net,val_loader,device)
                     # scheduler.step(val_score)

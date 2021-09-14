@@ -185,6 +185,20 @@ def thr_eval(name_in):
             gt_image = np.array(Image.open(os.path.join(args.mask_dir, img)))
             # pre_image = np.array(Image.open(os.path.join(skel_dir,img)))[:,:,0]
             pre_image = np.array(Image.open(os.path.join(skel_dir, img)))
+            #
+            # # mask for threshold
+            # if args.thr0 == True:
+            #     pass
+            # else:
+            #     if args.tta == True:
+            #         tta_thr = args.tta_thr * np.max(pre_image)
+            #         thr_mask = (pre_image >= tta_thr).float()
+            #         pre_image = pre_image * thr_mask
+            #     else:
+            #         no_tta_thr = args.no_tta_thr * np.max(pre_image)
+            #         thr_mask = (pre_image >= no_tta_thr).float()
+            #         pre_image = pre_image * thr_mask
+
             if len(np.where(pre_image!=0)[0])==0:
                 continue
             gt_points = tuple2list(np.where(gt_image!=0))
