@@ -8,7 +8,7 @@ device: 'cuda:0'
 #epochs: 255 # number of epochs
 #epochs: 60 # (data_split_sup2020_unsup1998_growing_iter1), iter_per_epoch: 999, [80, 90], lr 0.00005 [40] finetune
 #epochs: 80 # spacenet: number of epochs,(data_split_1data_pseudo1998_sup5994_unsup1998, data_split_1data_99unsup_100val_431test_5994sup) hog,contr,lr 0.0005,temp0.001,[60, 70], iter_per_epoch: 1998
-epochs: 70 # spacenet: number of epochs,hog,contr,lr 0.01,temp0.001,[40, 80], iter_per_epoch: 999, lr 0.001
+epochs: 110 # spacenet: number of epochs,hog,contr,lr 0.01,temp0.001,[40, 80], iter_per_epoch: 999, lr 0.001
 #epochs: 50 # spacenet: number of epochs,hog,contr,lr 0.001,temp0.001,[20, 40], iter_per_epoch: 1998, lr 0.001
 #epochs: 100 # predict 200 img growing
 #epochs: 80 # number of epochs data_split_1data_9990add_10010total_99unsup_100val_431test_10010totalsup [60, 70], iter_per_epoch: 1669, lr 0.0005
@@ -23,7 +23,7 @@ lr: 0.0005 # learning rate, training from the beginning
 #lr: 0.0005 # learning rate, training from the beginning
 #lr: 0.00005 # learning rate finetune
 gamma: 0.1 # learning drop
-lr_steps: [45, 60]
+lr_steps: [50, 75]
 # lr 0.01, 0.001, 0.0001
 # 1% data epochs: 7500, 18000, 25500
 # 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
@@ -43,7 +43,7 @@ save_per_epoch: 2
 
 # test
 test: False # whether run test
-load_checkpoint: './checkpoints/naive_baseline_3.pth' # if test is True, load the checkpoint
+load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load the checkpoint
 # 1% iter0
 # ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
 # 1% iter0 ta+tta
@@ -64,7 +64,7 @@ load_checkpoint: './checkpoints/naive_baseline_3.pth' # if test is True, load th
 # resume
 resume: True # whether resume
 whether_fintune: False
-resume_epoch: 4
+resume_epoch: 110
 
 # match
 match: False # whether resume
@@ -94,7 +94,7 @@ unsup_thr_ske_train: 0
 temp: 0.07
 #temp: 0.00001
 mask_thr: 0.1
-hog_thr: 0.6
+hog_thr: 0.5
 
 # unoverlap
 unsup_unover_in_size: 256
@@ -103,17 +103,17 @@ unover_ul_xy: 32
 
 # loss
 loss_sup_weight: 1
-loss_unsup_weight: 0.01
+loss_unsup_weight: 0.1
 loss_unsup_neg_weight: 0.1
 
 # test setting
-thr0: True # whether use threshold = 0 for prediction
+thr0: False # whether use threshold = 0 for prediction
 tta: True # whether test-time argumentation
-tta_thr: 0. # threshold for prediction with tta
-no_tta_thr: 0. # threshold for prediction without tta
+tta_thr: 0.235 # threshold for prediction with tta
+no_tta_thr: 0.235 # threshold for prediction without tta
 
 # skeleton threshold
-skeleton_thr: 0.
+skeleton_thr: 0.235
 skeleton_ig_line: 30
 
 # docker 

@@ -20,6 +20,9 @@ class UnsupDataset(Dataset):
         self.masks_dir = args.mask_dir
         self.semi_crop_in_size = args.unsup_crop_in_size
         self.semi_crop_out_size = args.unsup_crop_out_size
+        self.semi_unover_in_size = args.unsup_unover_in_size
+        self.semi_unover_out_size = args.unsup_unover_out_size
+        self.unover_ul_xy = args.unover_ul_xy
         self.data_augumentation = args.data_augumentation
         with open('./dataset/data_split.json', 'r') as jf:
             data_load = json.load(jf)
@@ -53,34 +56,34 @@ class UnsupDataset(Dataset):
 
         return image_crop, mask_crop, overlap_ul
 
-    def unoverlap_crop(self, image, mask, w, h, x_in_ul, y_in_ul, crop_in_h, crop_in_w):
+    def unoverlap_crop(self, image, mask, w, h, x_in_ul, y_in_ul, crop_in_w, crop_out_h, unover_out_h, unover_out_w, semi_unover_in_size, unover_ul_xy):
         max_iter = 50
         k = 0
         while k < max_iter:
-            x_unover_ul = np.random.randint(0, w - crop_in_w)
-            y_unover_ul = np.random.randint(0, h - crop_in_h)
+            x_unover_ul = np.random.randint(0, w - unover_out_w)
+            y_unover_ul = np.random.randint(0, h - unover_out_h)
 
-            if (abs(x_unover_ul - x_in_ul) - crop_in_w) > 0 or (abs(y_unover_ul - y_in_ul) -crop_in_h) > 0:
+            if (abs((x_unover_ul + unover_ul_xy) - x_in_ul) - semi_unover_in_size) > 0 or (abs((y_unover_ul + unover_ul_xy) - y_in_ul) -semi_unover_in_size) > 0:
                 break
 
             k += 1
 
-        if (abs(x_unover_ul - x_in_ul) - crop_in_w) < 0 and (abs(y_unover_ul - y_in_ul) - crop_in_h) < 0:
-            if (x_in_ul - crop_in_w) > 0:
-                x_unover_ul = np.random.randint(0, x_in_ul - crop_in_w)
-                y_unover_ul = np.random.randint(0, h - crop_in_h)
+        if (abs((x_unover_ul + unover_ul_xy) - x_in_ul) - semi_unover_in_size) < 0 and (abs((y_unover_ul + unover_ul_xy) - y_in_ul) - semi_unover_in_size) < 0:
+            if (x_in_ul - unover_out_w) > 0:
+                x_unover_ul = np.random.randint(0, x_in_ul - unover_out_w)
+                y_unover_ul = np.random.randint(0, h - unover_out_h)
             else:
-                x_unover_ul = np.random.randint(x_in_ul + crop_in_w, x_in_ul - crop_in_w)
-                y_unover_ul = np.random.randint(0, h - crop_in_h)
+                x_unover_ul = np.random.randint(x_in_ul + crop_in_w, w - unover_out_w)
+                y_unover_ul = np.random.randint(0, h - unover_out_h)
 
-        image_crop = image.crop((x_unover_ul, y_unover_ul, x_unover_ul + crop_in_w, y_unover_ul + crop_in_h))
-        mask_crop = mask.crop((x_unover_ul, y_unover_ul, x_unover_ul + crop_in_w, y_unover_ul + crop_in_h))
+        image_crop = image.crop((x_unover_ul, y_unover_ul, x_unover_ul + unover_out_w, y_unover_ul + unover_out_h))
+        mask_crop = mask.crop((x_unover_ul, y_unover_ul, x_unover_ul + unover_out_w, y_unover_ul + unover_out_h))
 
-        unover_ul = [y_unover_ul, x_unover_ul]
+        unover_ul = [unover_ul_xy, unover_ul_xy]
 
         return  image_crop, mask_crop, unover_ul
 
-    def overlap_crop(self, image, mask, semi_crop_in_size, semi_crop_out_size):
+    def overlap_crop(self, image, mask, semi_crop_in_size, semi_crop_out_size, semi_unover_out_size, semi_unover_in_size, unover_ul_xy):
         w, h = image.size
 
         # inside crop h,w
@@ -95,13 +98,17 @@ class UnsupDataset(Dataset):
         x_in_ul = np.random.randint(1, w - crop_in_w - 1)
         y_in_ul = np.random.randint(1, h - crop_in_h - 1)
 
+        # unoverlap crop h, w
+        unover_out_h = semi_unover_out_size
+        unover_out_w = semi_unover_out_size
+
         # outside crop image1 upperleft location
         image1, mask1, overlap1_ul = self.out_crop(image, mask, w, h, x_in_ul, y_in_ul, crop_in_h, crop_in_w, crop_out_h, crop_out_w)
 
         # outside crop image2 upperleft location
         image2, mask2, overlap2_ul = self.out_crop(image, mask, w, h, x_in_ul, y_in_ul, crop_in_h, crop_in_w, crop_out_h, crop_out_w)
 
-        image_unover, mask_unover, unover_ul = self.unoverlap_crop(image, mask, w, h, x_in_ul, y_in_ul, crop_in_h, crop_in_w,)
+        image_unover, mask_unover, unover_ul = self.unoverlap_crop(image, mask, w, h, x_in_ul, y_in_ul, crop_in_w, crop_out_h, unover_out_h, unover_out_w, semi_unover_in_size, unover_ul_xy)
 
         # # outside crop image3 upperleft location
         # image3, mask3, overlap3_ul = self.out_crop(image_nd, mask_nd, w, h, x_in_ul, y_in_ul,
@@ -163,7 +170,7 @@ class UnsupDataset(Dataset):
         # random crop image and traning data augumentation
         if self.data_augumentation:
             # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
-            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image_unover, mask_unover, unover_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image_unover, mask_unover, unover_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size, self.semi_unover_out_size, self.semi_unover_in_size, self.unover_ul_xy)
             # # save middle image
             # image1_save = np.array(image1).astype(np.uint8)
             # image1_save = cv2.rectangle(image1_save,
@@ -188,7 +195,7 @@ class UnsupDataset(Dataset):
             # image4, mask4, flip_rotate_4 = self.data_augu(image4, mask4)
         else:
             # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
-            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image_unover, mask_unover, unover_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
+            image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image_unover, mask_unover, unover_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size, self.semi_unover_out_size, self.semi_unover_in_size, self.unover_ul_xy)
             image1 = np.array(image1)
             mask1 = np.array(mask1)
             image2 = np.array(image2)

@@ -205,7 +205,8 @@ def thr_eval(name_in):
             pre_points = tuple2list(np.where(pre_image!=0))
             gt_tree = cKDTree(gt_points)
 
-            for ii, thr in enumerate([1,5,10]):
+            # for ii, thr in enumerate([1,5,10]):
+            for ii, thr in enumerate([1]):
             #for ii,thr in enumerate([2,5,10]):
                 if len(pre_points):
                     # recall
@@ -384,16 +385,30 @@ def latex(file_name):
     # with open('./{}_APLS.json'.format(file_name)) as jf:
     #     json_load_a = json.load(jf)
 
+    # print('===========================================')
+    # print('Precision 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_acc'][0]),\
+    #                                         ('%.3f'%json_load['pre_acc'][1]),\
+    #                                         ('%.3f'%json_load['pre_acc'][2])))
+    # print('Recall 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_recall'][0]),\
+    #                                         ('%.3f'%json_load['pre_recall'][1]),\
+    #                                         ('%.3f'%json_load['pre_recall'][2])))
+    # print('F1-score 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['r_f1'][0]),\
+    #                                         ('%.3f'%json_load['r_f1'][1]),\
+    #                                         ('%.3f'%json_load['r_f1'][2])))
+    # # print('Naive connectivity: {}'.format(('%.3f'%json_load_c['naive'])))
+    # # print('APLS: {}'.format(('%.3f'%json_load_a['APLS'])))
+    # # print('ECM: {}'.format(('%.3f'%json_load_c['ECM'])))
+    # print('===========================================')
     print('===========================================')
-    print('Precision 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_acc'][0]),\
-                                            ('%.3f'%json_load['pre_acc'][1]),\
-                                            ('%.3f'%json_load['pre_acc'][2])))
-    print('Recall 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['pre_recall'][0]),\
-                                            ('%.3f'%json_load['pre_recall'][1]),\
-                                            ('%.3f'%json_load['pre_recall'][2])))
-    print('F1-score 1/5/10: {}/{}/{}'.format(('%.3f'%json_load['r_f1'][0]),\
-                                            ('%.3f'%json_load['r_f1'][1]),\
-                                            ('%.3f'%json_load['r_f1'][2])))
+    print('Precision 1: {}/{}/{}'.format(('%.3f' % json_load['pre_acc'][0]), \
+                                              ('%.3f' % json_load['pre_acc'][1]), \
+                                              ('%.3f' % json_load['pre_acc'][2])))
+    print('Recall 1/5/10: {}/{}/{}'.format(('%.3f' % json_load['pre_recall'][0]), \
+                                           ('%.3f' % json_load['pre_recall'][1]), \
+                                           ('%.3f' % json_load['pre_recall'][2])))
+    print('F1-score 1/5/10: {}/{}/{}'.format(('%.3f' % json_load['r_f1'][0]), \
+                                             ('%.3f' % json_load['r_f1'][1]), \
+                                             ('%.3f' % json_load['r_f1'][2])))
     # print('Naive connectivity: {}'.format(('%.3f'%json_load_c['naive'])))
     # print('APLS: {}'.format(('%.3f'%json_load_a['APLS'])))
     # print('ECM: {}'.format(('%.3f'%json_load_c['ECM'])))
