@@ -33,9 +33,11 @@ from itertools import cycle
 from models.skeleton import soft_skel
 from models.gabore_filter_bank import GaborFilters
 from models.hog import HOGLayer
+from models.projector import projection, prediction
 import torchvision.transforms.functional as TF
 from torchvision import transforms
 from losses.var_loss import var_loss
+from losses.sim_loss import D
 import cv2
 import torchvision.transforms.functional_tensor as TFT
 
@@ -53,42 +55,19 @@ def normal_thr_output(net_unsup, thr_ske):
 
     return net_unsup
 
-# # flip and rotate back
-# def flip_rotate_back(net_unsup, flip_rotate, idx):
-#     # flip_rotate_1************** [tensor([0, 0]), tensor([0, 0]), tensor([180, 270])]
-#     net_unsup_idx = net_unsup[idx]
-#     angle = -int(flip_rotate[2][idx])
-#     net_unsup_idx = TF.rotate(net_unsup_idx, angle)
-#
-#     whether_hori_flip = flip_rotate[0][idx]
-#     whether_ver_flip = flip_rotate[1][idx]
-#
-#     transform_back = transforms.Compose([
-#         transforms.RandomVerticalFlip(whether_ver_flip),
-#         transforms.RandomHorizontalFlip(whether_hori_flip)
-#     ])
-#
-#     net_unsup_idx = transform_back(net_unsup_idx)
-#
-#     return net_unsup_idx
-
 def transform_back(net_unsup, flip_rotate):
-    # flip_rotate_1************** [tensor([0, 0]), tensor([0, 0]), tensor([180, 270])]
     for idx in range(net_unsup.size(0)):
         net_unsup_idx = net_unsup[idx]
         angle = -int(flip_rotate[2][idx] / 90)
-        # net_unsup_idx = TF.rotate(net_unsup_idx, angle)
         net_unsup_idx = torch.rot90(net_unsup_idx, angle, [1, 2])
 
         whether_hori_flip = flip_rotate[0][idx]
         whether_ver_flip = flip_rotate[1][idx]
 
         if whether_hori_flip:
-            # net_unsup_idx = net_unsup_idx[:, :, ::-1]
             net_unsup_idx = TFT.hflip(net_unsup_idx)
 
         if whether_ver_flip:
-            # net_unsup_idx = net_unsup_idx[:, ::-1, :]
             net_unsup_idx = TFT.vflip(net_unsup_idx)
 
         net_unsup[idx] = net_unsup_idx
@@ -102,6 +81,8 @@ def get_overlap(net_unsup, overlap_ul):
     return output
 
 def train_semi_net(net,
+              projector,
+              prediction,
               garbo_filter,
               hog,
               args,
@@ -121,7 +102,8 @@ def train_semi_net(net,
     n_train = len(unsup_train)
     #
     writer = SummaryWriter('./records/tensorboard')
-    optimizer = optim.Adam(net.parameters(), lr=lr)
+    # optimizer = optim.Adam(net.parameters(), lr=lr)
+    optimizer = optim.SGD(net.parameters(),lr=lr)
     lr_schedule = optim.lr_scheduler.MultiStepLR(optimizer, milestones=lr_steps, gamma=gamma)
     # initial start epoch
     start_epoch = -1
@@ -161,7 +143,6 @@ def train_semi_net(net,
 
     # train
     criterion_BCE = nn.BCEWithLogitsLoss()
-    # criterion_var = var_loss()
     criterion_MSE = nn.MSELoss()
 
     sup_train_loader = DataLoader(sup_train, batch_size=sup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
@@ -195,16 +176,11 @@ def train_semi_net(net,
 
             image_l, mask_l, name_l = sup_l['image'], sup_l['mask'], sup_l['name']
             image_l, mask_l = image_l.to(device=device, dtype=torch.float32), mask_l.to(device=device, dtype=torch.float32)
-            # image_l, mask_l = image_l.cuda(non_blocking=True), mask_l.cuda(non_blocking=True)
 
-            # image_ul, mask_ul, overlap1_ul, overlap2_ul, overlap3_ul, overlap4_ul, flip_rotate_1, flip_rotate_2, flip_rotate_3, flip_rotate_4, name = \
-            #     unsup_l['image'], unsup_l['mask'], unsup_l['overlap1_ul'], unsup_l['overlap2_ul'], unsup_l['overlap3_ul'], unsup_l['overlap4_ul'], \
-            #     unsup_l['flip_rotate_1'], unsup_l['flip_rotate_2'], unsup_l['flip_rotate_3'], unsup_l['flip_rotate_4'], unsup_l['name']
             image_ul, mask_ul, overlap1_ul, overlap2_ul, flip_rotate_1, flip_rotate_2, name = \
                 unsup_l['image'], unsup_l['mask'], unsup_l['overlap1_ul'], unsup_l['overlap2_ul'], \
                 unsup_l['flip_rotate_1'], unsup_l['flip_rotate_2'], unsup_l['name']
             image_ul, mask_ul = image_ul.to(device=device, dtype=torch.float32), mask_ul.to(device=device, dtype=torch.float32)
-            # image_ul, mask_ul = image_ul.cuda(non_blocking=True), mask_ul.cuda(non_blocking=True)
 
             optimizer.zero_grad()
 
@@ -231,17 +207,6 @@ def train_semi_net(net,
                 # image_ul: [batch_size, 4, 3, H, W]
                 image_ul1 = image_ul[:, 0, :, :, :] # [batch_size, 3, H, W]
                 image_ul2 = image_ul[:, 1, :, :, :]
-                # image_ul3 = image_ul[:, 2, :, :, :]
-                # image_ul4 = image_ul[:, 3, :, :, :]
-
-                # Unet, skeleton, gabor
-                # net_unsup1_pre = net(image_ul1) # [batch_size, 1, H, W]
-                # # thr 0.1 for skeleton
-                # net_unsup1_pre = normal_thr_output(net_unsup1_pre, args.unsup_thr_ske_train) # [batch_size, 1, H, W]
-                # net_unsup1_pre = torch.sigmoid(net_unsup1_pre)  # [batch_size, 1, H, W]
-                # net_unsup1_pre = soft_skel(net_unsup1_pre, 10)
-                # # gabor
-                # net_unsup1_pre = garbo_filter(net_unsup1_pre)
 
                 # net_unsup2_pre = net(image_ul2)
                 # net_unsup2_pre = torch.sigmoid(net_unsup2_pre)
@@ -271,62 +236,37 @@ def train_semi_net(net,
                 overlap_unsup1 = get_overlap(net_unsup1_pre, overlap1_ul)
                 overlap_unsup2 = get_overlap(net_unsup2_pre, overlap2_ul)
 
-                # get overlap part
-                # overlap_unsup1_list = []
-                # overlap_unsup2_list = []
-                # overlap_unsup3_list = []
-                # overlap_unsup4_list = []
-                # for idx in range(net_unsup1_pre.size(0)):
-                #     net_unsup1_back_idx = flip_rotate_back(net_unsup1_pre, flip_rotate_1, idx) # [1, 384, 384]
-                #     # # print middle results
-                #     # net_unsup1_back_idx_save = net_unsup1_back_idx.cpu().detach().numpy()
-                #     # net_unsup1_back_idx_save = net_unsup1_back_idx_save[0, :, :]
-                #     # net_unsup1_back_idx_save = net_unsup1_back_idx_save/np.max(net_unsup1_back_idx_save) * 255
-                #     # net_unsup1_back_idx_save = net_unsup1_back_idx_save.astype(np.uint8)
-                #     # path_unsup1_back_idx_save = os.path.join(args.checkpoints_dir, "middle", name[idx]+'_1.png')
-                #     # Image.fromarray(net_unsup1_back_idx_save).save(path_unsup1_back_idx_save)
-                #     # net_unsup1_back_idx_save = cv2.imread(path_unsup1_back_idx_save, 1)
-                #     # net_unsup1_back_idx_bound_save = cv2.rectangle(net_unsup1_back_idx_save,
-                #     #                                                (int(overlap1_ul[1][idx]),  int(overlap1_ul[0][idx])),
-                #     #                                                 (int(overlap1_ul[1][idx])+args.unsup_crop_in_size, int(overlap1_ul[0][idx])+args.unsup_crop_in_size),
-                #     #                                                 (255, 0, 0), 2)#  red for x1
-                #     # cv2.imwrite(path_unsup1_back_idx_save, net_unsup1_back_idx_bound_save)
-                #     overlap_unsup1_list.append(net_unsup1_back_idx[:, int(overlap1_ul[0][idx]):int(overlap1_ul[0][idx])+args.unsup_crop_in_size, int(overlap1_ul[1][idx]):int(overlap1_ul[1][idx])+args.unsup_crop_in_size]) # [1, 256, 256]
+                hog_overlap_unsup1 = hog(overlap_unsup1)                          # [2, 12, 32, 32]
+                hog_overlap_unsup2 = hog(overlap_unsup2)
+
+                # MSE stop gradient
+                # hog_overlap_unsup1_de = hog_overlap_unsup1.detach()
+                # hog_overlap_unsup2_de = hog_overlap_unsup2.detach()
                 #
-                #     net_unsup2_back_idx = flip_rotate_back(net_unsup2_pre, flip_rotate_2, idx)
-                #     # # print middle results
-                #     # net_unsup2_back_idx_save = net_unsup2_back_idx.cpu().detach().numpy()
-                #     # net_unsup2_back_idx_save = net_unsup2_back_idx_save[0, :, :]
-                #     # net_unsup2_back_idx_save = net_unsup2_back_idx_save / np.max(net_unsup2_back_idx_save) * 255
-                #     # net_unsup2_back_idx_save = net_unsup2_back_idx_save.astype(np.uint8)
-                #     # path_unsup2_back_idx_save = os.path.join(args.checkpoints_dir, "middle",
-                #     #                                          name[idx] + '_2.png')
-                #     # Image.fromarray(net_unsup2_back_idx_save).save(path_unsup2_back_idx_save)
-                #     # net_unsup2_back_idx_save = cv2.imread(path_unsup2_back_idx_save, 1)
-                #     # net_unsup2_back_idx_bound_save = cv2.rectangle(net_unsup2_back_idx_save,
-                #     #                                                (int(overlap2_ul[1][idx]), int(overlap2_ul[0][idx])),
-                #     #                                                (int(overlap2_ul[1][idx]) + args.unsup_crop_in_size,
-                #     #                                                 int(overlap2_ul[0][idx]) + args.unsup_crop_in_size),
-                #     #                                                (255, 0, 0), 2)  # red for x2
-                #     # cv2.imwrite(path_unsup2_back_idx_save, net_unsup2_back_idx_bound_save)
-                #     overlap_unsup2_list.append(net_unsup2_back_idx[:, int(overlap2_ul[0][idx]):int(overlap2_ul[0][idx])+args.unsup_crop_in_size, int(overlap2_ul[1][idx]):int(overlap2_ul[1][idx])+args.unsup_crop_in_size])
+                # loss_unsup = (criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2_de) / 2 + criterion_MSE(hog_overlap_unsup2, hog_overlap_unsup1_de) / 2) * args.loss_unsup_var_weight
 
-                    # net_unsup3_back_idx = flip_rotate_back(net_unsup3_pre, flip_rotate_3, idx)
-                    # overlap_unsup3_list.append(net_unsup3_back_idx[:, int(overlap3_ul[0][idx]):int(overlap3_ul[0][idx])+args.unsup_crop_in_size, int(overlap3_ul[1][idx]):int(overlap3_ul[1][idx])+args.unsup_crop_in_size])
-                    #
-                    # net_unsup4_back_idx = flip_rotate_back(net_unsup4_pre, flip_rotate_4, idx)
-                    # overlap_unsup4_list.append(net_unsup4_back_idx[:, int(overlap4_ul[0][idx]):int(overlap4_ul[0][idx])+args.unsup_crop_in_size, int(overlap4_ul[1][idx]):int(overlap4_ul[1][idx])+args.unsup_crop_in_size])
+                #Sim stop gradient
+                # hog_overlap_unsup1_projector = projector(hog_overlap_unsup1)                          # [2, 12, 32, 32]
+                # hog_overlap_unsup2_projector = projector(hog_overlap_unsup2)
+                # hog_overlap_unsup1_prediction = prediction(hog_overlap_unsup1_projector)                          # [2, 12, 32, 32]
+                # hog_overlap_unsup2_prediction = prediction(hog_overlap_unsup2_projector)
+                #
+                # hog_overlap_unsup1_projector = torch.flatten(hog_overlap_unsup1_projector, 1) # [b, chw]
+                # hog_overlap_unsup2_projector = torch.flatten(hog_overlap_unsup2_projector, 1)
+                # hog_overlap_unsup1_prediction = torch.flatten(hog_overlap_unsup1_prediction, 1)
+                # hog_overlap_unsup2_prediction = torch.flatten(hog_overlap_unsup2_prediction, 1)
 
-                # overlap_unsup1 = torch.cat(overlap_unsup1_list, 0).unsqueeze(1)  # [2, 1, 256, 256]
-                hog_overlap_unsup1= hog(overlap_unsup1)                          # [2, 12, 32, 32]
-                # overlap_unsup2 = torch.cat(overlap_unsup2_list, 0).unsqueeze(1)
-                hog_overlap_unsup2= hog(overlap_unsup2)
+                # MSE stop gradient only with prediction
+                hog_overlap_unsup1_prediction = prediction(hog_overlap_unsup1)                          # [2, 12, 32, 32]
+                hog_overlap_unsup2_prediction = prediction(hog_overlap_unsup2)
 
-                # loss_unsup = criterion_var(overlap_unsup1, overlap_unsup2, overlap_unsup3, overlap_unsup4) * args.loss_unsup_var_weight
-                loss_unsup = criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2) * args.loss_unsup_var_weight
-                # print("loss_unsup************************", loss_unsup)
+                hog_overlap_unsup1_de = hog_overlap_unsup1_prediction.detach()
+                hog_overlap_unsup2_de = hog_overlap_unsup2_prediction.detach()
+
+                loss_unsup = (criterion_MSE(hog_overlap_unsup1_prediction, hog_overlap_unsup2_de) / 2 + criterion_MSE(hog_overlap_unsup2_prediction, hog_overlap_unsup1_de) / 2) * args.loss_unsup_var_weight
+
+                # loss_unsup = (D(hog_overlap_unsup1_prediction, hog_overlap_unsup2_projector, args.sim_versiion) / 2 + D(hog_overlap_unsup2_prediction, hog_overlap_unsup1_projector, args.sim_versiion) / 2) * args.loss_unsup_var_weight
                 total_loss = loss_sup + loss_unsup
-                # print("total_loss************************", total_loss)
 
                 total_loss.backward()
                 optimizer.step()
@@ -336,7 +276,7 @@ def train_semi_net(net,
                 writer.add_scalar('loss/unsup', loss_unsup.item(), global_step)
                 writer.add_scalar('loss/total', total_loss.item(), global_step)
                 writer.add_scalar('train', total_loss.item(), global_step)
-                tbar.set_postfix(**{'loss_sup': loss_sup.item(), 'loss_unsup': loss_unsup.item(), 'loss_total': total_loss.item(), 'fix': 0})
+                tbar.set_postfix(**{'sup': loss_sup.item(), 'unsup': loss_unsup.item(), 'total': total_loss.item()})
 
             # save checkpoints
             # if ((global_step % (args.iter_per_epoch * args.save_per_epoch) == 0) and (epoch + 1) % args.save_per_epoch == 0) or ((global_step % args.iter_start_unsup == 0) and (epoch + 1 == 1)):
@@ -437,7 +377,7 @@ if __name__ == '__main__':
         # net.load_state_dict(
         #     torch.load(args.load_checkpoint, map_location='cpu')
         # )
-        path_checkpoint = args.load_checkpoint  # checkpont path
+        path_checkpoint = args.load_checkpoint  # checkpoint path
         checkpoint = torch.load(path_checkpoint, map_location='cpu')  # load checkpoint
         net.load_state_dict(
             checkpoint["net"]
@@ -452,11 +392,15 @@ if __name__ == '__main__':
     net.to(device=device)
     garbo_filter = GaborFilters(in_channels=1).to(device=device)
     hog = HOGLayer(nbins=12, pool=8).to(device=device)
+    projector = projection(in_dim=12, hidden_dim=12, out_dim=12).to(device=device)
+    prediction = prediction(in_dim=12, hidden_dim=12, out_dim=12).to(device=device)
 
     try:
         if (not args.test) and (not args.match):
             if args.semi == True:
                 train_semi_net(net=net,
+                               projector=projector,
+                               prediction=prediction,
                                garbo_filter = garbo_filter,
                                hog = hog,
                                args=args,

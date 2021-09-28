@@ -7,7 +7,7 @@ device: 'cuda:0'
 #lr: 0.0001 # learning rate
 #epochs: 255 # number of epochs
 #epochs: 60 # (data_split_sup2020_unsup1998_growing_iter1), iter_per_epoch: 999, [80, 90], lr 0.00005 [40] finetune
-epochs: 120 # spacenet: number of epochs,(data_split_1data_pseudo1998_sup5994_unsup1998, data_split_1data_99unsup_100val_431test_5994sup) [80, 100], iter_per_epoch: 999, lr 0.0005
+epochs: 140 # spacenet: number of epochs,(data_split_1data_pseudo1998_sup5994_unsup1998, data_split_1data_99unsup_100val_431test_5994sup) [80, 100], iter_per_epoch: 999, lr 0.0005
 #epochs: 100 # predict 200 img growing
 #epochs: 80 # number of epochs data_split_1data_9990add_10010total_99unsup_100val_431test_10010totalsup [60, 70], iter_per_epoch: 1669, lr 0.0005
 #epochs: 220 # number of epochs data_split_1data_1055pos_3168sup [150, 190],iter_per_epoch: 528, lr 0.0005
@@ -19,7 +19,7 @@ iter_start_unsup: 1998
 lr: 0.0005 # learning rate, training from the beginning
 #lr: 0.00005 # learning rate finetune
 gamma: 0.1 # learning drop
-lr_steps: [80, 100]
+lr_steps: [100, 120]
 # lr 0.01, 0.001, 0.0001
 # 1% data epochs: 7500, 18000, 25500
 # 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
@@ -35,11 +35,11 @@ thresh: 0.76
 
 # dirs
 checkpoints_dir: './checkpoints/'
-save_per_epoch: 1
+save_per_epoch: 2
 
 # test
 test: False # whether run test
-load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load the checkpoint
+load_checkpoint: './checkpoints/naive_baseline_13.pth' # if test is True, load the checkpoint
 # 1% iter0
 # ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
 # 1% iter0 ta+tta
@@ -60,7 +60,7 @@ load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load
 # resume
 resume: False # whether resume
 whether_fintune: False
-resume_epoch: 80
+resume_epoch: 14
 
 # match
 match: False # whether resume
@@ -86,7 +86,10 @@ unsup_thr_ske_train: 0
 
 # loss
 loss_sup_weight: 1
-loss_unsup_var_weight: 1
+loss_unsup_var_weight: 0.1
+
+# sim loss version
+sim_versiion: 'simplified'
 
 # test setting
 thr0: True # whether use threshold = 0 for prediction
