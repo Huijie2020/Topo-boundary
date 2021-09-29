@@ -386,16 +386,21 @@ def train_semi_net(net,
                 # positive similarity
                 pos1 = (hog_overlap_unsup1_flatten * hog_overlap_unsup2_flatten.detach()).sum(-1, keepdim=True) / args.temp  # [n, 1]
                 pos2 = (hog_overlap_unsup1_flatten.detach() * hog_overlap_unsup2_flatten).sum(-1, keepdim=True) / args.temp  # [n, 1]
+                # pos = (hog_overlap_unsup1_flatten * hog_overlap_unsup2_flatten).sum(-1, keepdim=True) / args.temp  # [n, 1]
 
                 # negative overlap1
                 logits1_neg_idx, neg_max1 = torch.utils.checkpoint.checkpoint(logits_run, pos1, hog_overlap_unsup1_flatten, hog_neg, mask1_detach)
+                # logits1_neg_idx, neg_max1 = torch.utils.checkpoint.checkpoint(logits_run, pos, hog_overlap_unsup1_flatten, hog_neg, mask1_detach)
                 logits1 = torch.exp(pos1 - neg_max1).squeeze(-1) / (logits1_neg_idx + eps)
+                # logits1 = torch.exp(pos - neg_max1).squeeze(-1) / (logits1_neg_idx + eps)
                 loss1 = -torch.log(logits1 + eps)
                 loss1 = loss1.sum()/(loss1.numel() + 1e-12)
 
                 # negative overlap2
                 logits2_neg_idx, neg_max2 = torch.utils.checkpoint.checkpoint(logits_run, pos2, hog_overlap_unsup2_flatten, hog_neg, mask2_detach)
+                # logits2_neg_idx, neg_max2 = torch.utils.checkpoint.checkpoint(logits_run, pos, hog_overlap_unsup2_flatten, hog_neg, mask2_detach)
                 logits2 = torch.exp(pos2 - neg_max2).squeeze(-1) / (logits2_neg_idx + eps)
+                # logits2 = torch.exp(pos - neg_max2).squeeze(-1) / (logits2_neg_idx + eps)
                 loss2 = -torch.log(logits2 + eps)
                 loss2 = loss2.sum() / (loss2.numel() + 1e-12)
 

@@ -107,10 +107,10 @@ loss_unsup_weight: 0.1
 loss_unsup_neg_weight: 0.1
 
 # test setting
-thr0: False # whether use threshold = 0 for prediction
+thr0: True # whether use threshold = 0 for prediction
 tta: True # whether test-time argumentation
-tta_thr: 0.235 # threshold for prediction with tta
-no_tta_thr: 0.235 # threshold for prediction without tta
+tta_thr: 0. # threshold for prediction with tta
+no_tta_thr: 0. # threshold for prediction without tta
 
 # skeleton threshold
 skeleton_thr: 0.235
