@@ -239,33 +239,33 @@ def train_semi_net(net,
                 hog_overlap_unsup1 = hog(overlap_unsup1)                          # [2, 12, 32, 32]
                 hog_overlap_unsup2 = hog(overlap_unsup2)
 
-                # MSE stop gradient
+                # # MSE stop gradient
                 # hog_overlap_unsup1_de = hog_overlap_unsup1.detach()
                 # hog_overlap_unsup2_de = hog_overlap_unsup2.detach()
                 #
                 # loss_unsup = (criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2_de) / 2 + criterion_MSE(hog_overlap_unsup2, hog_overlap_unsup1_de) / 2) * args.loss_unsup_var_weight
 
-                #Sim stop gradient
-                # hog_overlap_unsup1_projector = projector(hog_overlap_unsup1)                          # [2, 12, 32, 32]
-                # hog_overlap_unsup2_projector = projector(hog_overlap_unsup2)
-                # hog_overlap_unsup1_prediction = prediction(hog_overlap_unsup1_projector)                          # [2, 12, 32, 32]
-                # hog_overlap_unsup2_prediction = prediction(hog_overlap_unsup2_projector)
+                # Sim stop gradient
+                hog_overlap_unsup1_projector = projector(hog_overlap_unsup1)                          # [2, 12, 32, 32]
+                hog_overlap_unsup2_projector = projector(hog_overlap_unsup2)
+                hog_overlap_unsup1_prediction = prediction(hog_overlap_unsup1_projector)                          # [2, 12, 32, 32]
+                hog_overlap_unsup2_prediction = prediction(hog_overlap_unsup2_projector)
+
+                hog_overlap_unsup1_projector = torch.flatten(hog_overlap_unsup1_projector, 1) # [b, chw]
+                hog_overlap_unsup2_projector = torch.flatten(hog_overlap_unsup2_projector, 1)
+                hog_overlap_unsup1_prediction = torch.flatten(hog_overlap_unsup1_prediction, 1)
+                hog_overlap_unsup2_prediction = torch.flatten(hog_overlap_unsup2_prediction, 1)
+
+                # # MSE stop gradient only with prediction
+                # hog_overlap_unsup1_prediction = prediction(hog_overlap_unsup1)                          # [2, 12, 32, 32]
+                # hog_overlap_unsup2_prediction = prediction(hog_overlap_unsup2)
                 #
-                # hog_overlap_unsup1_projector = torch.flatten(hog_overlap_unsup1_projector, 1) # [b, chw]
-                # hog_overlap_unsup2_projector = torch.flatten(hog_overlap_unsup2_projector, 1)
-                # hog_overlap_unsup1_prediction = torch.flatten(hog_overlap_unsup1_prediction, 1)
-                # hog_overlap_unsup2_prediction = torch.flatten(hog_overlap_unsup2_prediction, 1)
+                # hog_overlap_unsup1_de = hog_overlap_unsup1_prediction.detach()
+                # hog_overlap_unsup2_de = hog_overlap_unsup2_prediction.detach()
+                #
+                # loss_unsup = (criterion_MSE(hog_overlap_unsup1_prediction, hog_overlap_unsup2_de) / 2 + criterion_MSE(hog_overlap_unsup2_prediction, hog_overlap_unsup1_de) / 2) * args.loss_unsup_var_weight
 
-                # MSE stop gradient only with prediction
-                hog_overlap_unsup1_prediction = prediction(hog_overlap_unsup1)                          # [2, 12, 32, 32]
-                hog_overlap_unsup2_prediction = prediction(hog_overlap_unsup2)
-
-                hog_overlap_unsup1_de = hog_overlap_unsup1_prediction.detach()
-                hog_overlap_unsup2_de = hog_overlap_unsup2_prediction.detach()
-
-                loss_unsup = (criterion_MSE(hog_overlap_unsup1_prediction, hog_overlap_unsup2_de) / 2 + criterion_MSE(hog_overlap_unsup2_prediction, hog_overlap_unsup1_de) / 2) * args.loss_unsup_var_weight
-
-                # loss_unsup = (D(hog_overlap_unsup1_prediction, hog_overlap_unsup2_projector, args.sim_versiion) / 2 + D(hog_overlap_unsup2_prediction, hog_overlap_unsup1_projector, args.sim_versiion) / 2) * args.loss_unsup_var_weight
+                loss_unsup = (D(hog_overlap_unsup1_prediction, hog_overlap_unsup2_projector, args.sim_versiion) / 2 + D(hog_overlap_unsup2_prediction, hog_overlap_unsup1_projector, args.sim_versiion) / 2) * args.loss_unsup_var_weight
                 total_loss = loss_sup + loss_unsup
 
                 total_loss.backward()
@@ -429,7 +429,7 @@ if __name__ == '__main__':
             test = BasicDataset(args)
             test_loader = DataLoader(test, batch_size=1, shuffle=False,  pin_memory=True, drop_last=False)
             eval_net(args,net, test_loader, device)
-            skeleton(args)
+            # skeleton(args)
 
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
