@@ -43,7 +43,7 @@ save_per_epoch: 2
 
 # test
 test: False # whether run test
-load_checkpoint: './checkpoints/naive_baseline_75.pth' # if test is True, load the checkpoint
+load_checkpoint: './checkpoints/naive_baseline_77.pth' # if test is True, load the checkpoint
 # 1% iter0
 # ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
 # 1% iter0 ta+tta
@@ -64,7 +64,7 @@ load_checkpoint: './checkpoints/naive_baseline_75.pth' # if test is True, load t
 # resume
 resume: True # whether resume
 whether_fintune: False
-resume_epoch: 76
+resume_epoch: 78
 
 # match
 match: False # whether resume
