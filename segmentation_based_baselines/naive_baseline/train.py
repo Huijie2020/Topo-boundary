@@ -192,7 +192,7 @@ def train_semi_net(net,
             lr_schedule.load_state_dict(checkpoint['lr_schedule'])
             global_step = (start_epoch + 1) * (args.iter_per_epoch)
 
-        # # load optimizer and lr_scheduler
+        # load optimizer and lr_scheduler
         # if args.resume_epoch > 0:
         #     for i in range(args.resume_epoch):
         #         for j in range(args.iter_per_epoch):
@@ -200,26 +200,26 @@ def train_semi_net(net,
         #             optimizer.step()
         #         lr_schedule.step()
 
-        # val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
-        # valid_score = eval_net(args, net, val_loader, device)
-        # writer.add_scalar('valid', valid_score, global_step)
-        # # save checkpoint
-        # checkpoint_best = {
-        #     "net": net.state_dict(),
-        #     # 'optimizer': optimizer.state_dict(),
-        #     "epoch": start_epoch
-        #     # 'lr_schedule': lr_schedule.state_dict()
-        # }
-        # if not os.path.isdir(args.checkpoints_dir):
-        #     os.mkdir(args.checkpoints_dir)
-        # # save best model
-        # if valid_score > best_valid_socre:
-        #     best_valid_socre = valid_score
-        #     with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
-        #         f.write(str(best_valid_socre))
-        #     f.close()
-        #     torch.save(checkpoint_best,
-        #                args.checkpoints_dir + 'naive_baseline_best.pth')
+        val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
+        valid_score = eval_net(args, net, val_loader, device)
+        writer.add_scalar('valid', valid_score, global_step)
+        # save checkpoint
+        checkpoint_best = {
+            "net": net.state_dict(),
+            # 'optimizer': optimizer.state_dict(),
+            "epoch": start_epoch
+            # 'lr_schedule': lr_schedule.state_dict()
+        }
+        if not os.path.isdir(args.checkpoints_dir):
+            os.mkdir(args.checkpoints_dir)
+        # save best model
+        if valid_score > best_valid_socre:
+            best_valid_socre = valid_score
+            with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+                f.write(str(best_valid_socre))
+            f.close()
+            torch.save(checkpoint_best,
+                       args.checkpoints_dir + 'naive_baseline_best.pth')
     else:
         global_step = 0
 
@@ -228,6 +228,7 @@ def train_semi_net(net,
     criterion_BCEwo = nn.CrossEntropyLoss()
     criterion_MSE = nn.MSELoss()
     pooler = nn.AvgPool2d((8, 8), stride=(8, 8), padding=0, ceil_mode=False, count_include_pad=True)
+    # pooler = nn.AvgPool2d((16, 16), stride=(16, 16), padding=0, ceil_mode=False, count_include_pad=True)
 
     sup_train_loader = DataLoader(sup_train, batch_size=sup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
     unsup_train_loader = DataLoader(unsup_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True,
@@ -563,6 +564,7 @@ if __name__ == '__main__':
     net.to(device=device)
     garbo_filter = GaborFilters(in_channels=1).to(device=device)
     hog = HOGLayer(nbins=12, pool=8).to(device=device)
+    # hog = HOGLayer(nbins=12, pool=16).to(device=device)
     projector = projection(in_dim=12, out_dim=12).to(device=device)
 
     try:

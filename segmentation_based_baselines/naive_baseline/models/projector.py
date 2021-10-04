@@ -9,6 +9,7 @@ class projection(nn.Module):
         hidden_dim = in_dim
         self.layer1 = nn.Sequential(
             nn.Conv2d(in_dim, hidden_dim, kernel_size=1, stride=1),
+            # nn.BatchNorm2d(hidden_dim),
             nn.ReLU(inplace=True)
         )
         self.layer2 = nn.Conv2d(hidden_dim, out_dim, kernel_size=1, stride=1)
