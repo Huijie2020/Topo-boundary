@@ -119,12 +119,21 @@ def generate_mask(binary_base, binary_compare, pooler):
     mask_flatten = mask.view(-1, 1) # [n, 1]
     return mask_flatten
 
-def logits_run(pos, hog_over_flatten, hog_neg, mask):
-    neg_idx = (hog_over_flatten * hog_neg) / args.temp  # [n, 4]
-    neg_idx = torch.cat([pos, neg_idx], 1)  # [n, 1+4]
-    mask_idx = torch.cat([torch.ones(mask.size(0), 1).float().cuda(), mask], 1)  # [n, 1+b]
+def logits_run(pos, hog_over_flatten, hog_neg):
+    neg_idx = (hog_over_flatten * hog_neg) / args.temp  # [n, 1neg]
+    neg_idx = torch.cat([pos, neg_idx], 1)  # [n, 1+1neg]
     neg_max = torch.max(neg_idx, 1, keepdim=True)[0]  # [n, 1]
-    logits_neg_idx = (torch.exp(neg_idx - neg_max) * mask_idx).sum(-1)  # [n, ]
+    logits_neg_idx = (torch.exp(neg_idx - neg_max)).sum(-1)  # [n, ]
+
+    # # print('\n hog_over_flatten 11111111111111111111111\n',hog_over_flatten)
+    # # print('\n hog_over_flatten size 11111111111111111111111\n',hog_over_flatten.shape)
+    # print('\n neg_idx 222222222222222222222222222222222\n',neg_idx)
+    # # print('\nneg_idx shape222222222222222222222222222222222\n',neg_idx.shape)
+    # print('\n neg_max 33333333333333333333333333333333\n',neg_max)
+    # print('\n neg_idx - neg_max 4444444444444444444444\n',neg_idx - neg_max)
+    # print('\n torch.exp(neg_idx - neg_max) 5555555555555555555555555\n',torch.exp(neg_idx - neg_max))
+    # print('\n logits_neg_idx 6666666666666666666666666666\n',logits_neg_idx)
+
     return logits_neg_idx, neg_max
 
 def moco(pos1, pos2, neg):
@@ -149,6 +158,7 @@ def train_semi_net(net,
               projector,
               garbo_filter,
               hog,
+              hog2,
               args,
               epochs,
               sup_batch_size,
@@ -192,7 +202,7 @@ def train_semi_net(net,
             lr_schedule.load_state_dict(checkpoint['lr_schedule'])
             global_step = (start_epoch + 1) * (args.iter_per_epoch)
 
-        # load optimizer and lr_scheduler
+        # # load optimizer and lr_scheduler
         # if args.resume_epoch > 0:
         #     for i in range(args.resume_epoch):
         #         for j in range(args.iter_per_epoch):
@@ -225,9 +235,9 @@ def train_semi_net(net,
 
     # train
     criterion_BCE = nn.BCEWithLogitsLoss()
-    criterion_BCEwo = nn.CrossEntropyLoss()
-    criterion_MSE = nn.MSELoss()
-    pooler = nn.AvgPool2d((8, 8), stride=(8, 8), padding=0, ceil_mode=False, count_include_pad=True)
+    # criterion_BCEwo = nn.CrossEntropyLoss()
+    # criterion_MSE = nn.MSELoss()
+    # pooler = nn.AvgPool2d((8, 8), stride=(8, 8), padding=0, ceil_mode=False, count_include_pad=True)
     # pooler = nn.AvgPool2d((16, 16), stride=(16, 16), padding=0, ceil_mode=False, count_include_pad=True)
 
     sup_train_loader = DataLoader(sup_train, batch_size=sup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
@@ -301,12 +311,12 @@ def train_semi_net(net,
 
                 net_unover_pre = torch.sigmoid(net(image_unover))
                 net_unover_pre = transform_back(net_unover_pre, flip_rotate_unover)  # [2, 1, 256, 256]
-                net_unover = get_overlap(net_unover_pre, unover_ul, args.unsup_unover_in_size)  # [2, 1, 256, 256]
+                # net_unover = get_overlap(net_unover_pre, unover_ul, args.unsup_unover_in_size)  # [2, 1, 256, 256]
 
-                # generate binary map for mask
-                overlap_unsup1_binary = (overlap_unsup1 > args.mask_thr).float()
-                overlap_unsup2_binary = (overlap_unsup2 > args.mask_thr).float()
-                unvoer_binary = (net_unover > args.mask_thr).float()
+                # # generate binary map for mask
+                # overlap_unsup1_binary = (overlap_unsup1 > args.mask_thr).float()
+                # overlap_unsup2_binary = (overlap_unsup2 > args.mask_thr).float()
+                # unvoer_binary = (net_unover > args.mask_thr).float()
 
                 # # negative MSE
                 # # generate mask for negative sample
@@ -322,36 +332,44 @@ def train_semi_net(net,
                 # overlap_unsup2_reverse_binary[0] = overlap_unsup2_binary[1]
                 # overlap_unsup2_reverse_binary[1] = overlap_unsup2_binary[0]
 
-                unover_reverse_binary = torch.zeros(unvoer_binary.shape).float().cuda()
-                unover_reverse_binary[0] = unvoer_binary[1]
-                unover_reverse_binary[1] = unvoer_binary[0]
+                # unover_reverse_binary = torch.zeros(unvoer_binary.shape).float().cuda()
+                # unover_reverse_binary[0] = unvoer_binary[1]
+                # unover_reverse_binary[1] = unvoer_binary[0]
 
                 # generate masks for negative samples
-                mask1 = []
-                mask1.append(generate_mask(overlap_unsup1_binary, unvoer_binary, pooler)) # mask1_unvoer_flatten
-                mask1.append(generate_mask(overlap_unsup1_binary, unover_reverse_binary, pooler)) # mask1_reverseunvoer_flatten
+                # mask1 = []
+                # mask1.append(generate_mask(overlap_unsup1_binary, unvoer_binary, pooler)) # mask1_unvoer_flatten
+                # mask1.append(generate_mask(overlap_unsup1_binary, unover_reverse_binary, pooler)) # mask1_reverseunvoer_flatten
                 # mask1.append(generate_mask(overlap_unsup1_binary, overlap_unsup1_reverse_binary, pooler)) # mask1_reverse1_flatten
                 # mask1.append(generate_mask(overlap_unsup1_binary, overlap_unsup2_reverse_binary, pooler)) # mask1_reverse2_flatten
-                mask1 = torch.cat(mask1, dim=1)
-                mask1_detach = mask1.detach()
+                # mask1 = torch.cat(mask1, dim=1)
+                # mask1_detach = mask1.detach()
 
-                mask2 = []
-                mask2.append(generate_mask(overlap_unsup2_binary, unvoer_binary, pooler)) # mask2_unvoer_flatten
-                mask2.append(generate_mask(overlap_unsup2_binary, unover_reverse_binary, pooler)) # mask2_reverseunvoer_flatten
+                # mask2 = []
+                # mask2.append(generate_mask(overlap_unsup2_binary, unvoer_binary, pooler)) # mask2_unvoer_flatten
+                # mask2.append(generate_mask(overlap_unsup2_binary, unover_reverse_binary, pooler)) # mask2_reverseunvoer_flatten
                 # mask2.append(generate_mask(overlap_unsup2_binary, overlap_unsup1_reverse_binary, pooler)) # mask2_reverse1_flatten
                 # mask2.append(generate_mask(overlap_unsup2_binary, overlap_unsup2_reverse_binary, pooler)) # mask2_reverse2_flatten
-                mask2 = torch.cat(mask2, dim=1) #[n, 4]
-                mask2_detach = mask2.detach()
+                # mask2 = torch.cat(mask2, dim=1) #[n, 4]
+                # mask2_detach = mask2.detach()
 
                 # generate hog layers
                 hog_overlap_unsup1= hog(overlap_unsup1) # [2, 12, 32, 32]
                 hog_overlap_unsup2= hog(overlap_unsup2) # [2, 12, 32, 32]
-                hog_unover= hog(net_unover) # [2, 12, 32, 32]
+                hog_unover= hog2(net_unover_pre) # [2, 12, 32, 32]
+                # hog_net_unsup1_pre= hog2(net_unsup1_pre) # [2, 12, 32, 32]
+                # hog_net_unsup2_pre= hog2(net_unsup2_pre) # [2, 12, 32, 32]
 
                 # go through projector
                 hog_overlap_unsup1 = projector(hog_overlap_unsup1)  # [2, 12, 32, 32]
+                # print('\nhog_overlap_unsup1--------------------------------------\n', hog_overlap_unsup1)
                 hog_overlap_unsup2 = projector(hog_overlap_unsup2)  # [2, 12, 32, 32]
+                # print('\nhog_overlap_unsup2 1111111111111111111111111111111111111\n', hog_overlap_unsup2)
                 hog_unover = projector(hog_unover)  # [2, 12, 32, 32]
+                # print('\nhog_unover 1111111111111111111111111111111111111\n', hog_unover)
+                # hog_net_unsup1_pre = projector(hog_net_unsup1_pre)  # [2, 12, 32, 32]
+                # hog_net_unsup2_pre = projector(hog_net_unsup2_pre)  # [2, 12, 32, 32]
+
 
 
                 # generate hog layers of negative sameple from existing samples
@@ -363,47 +381,62 @@ def train_semi_net(net,
                 # hog_overlap_unsup2_reverse[0] = hog_overlap_unsup2[1]
                 # hog_overlap_unsup2_reverse[1] = hog_overlap_unsup2[0]  # [2, 12, 32, 32]
 
-                hog_unover_reverse = torch.zeros(hog_unover.shape).float().cuda()
-                hog_unover_reverse[0] = hog_unover[1]
-                hog_unover_reverse[1] = hog_unover[0]  # [2, 12, 32, 32]
+                # hog_unover_reverse = torch.zeros(hog_unover.shape).float().cuda()
+                # hog_unover_reverse[0] = hog_unover[1]
+                # hog_unover_reverse[1] = hog_unover[0]  # [2, 12, 32, 32]
 
                 # generate hog for negative samples
                 hog_overlap_unsup1_flatten = hog_overlap_unsup1.view(-1, 1) # [bchw, 1]
                 hog_overlap_unsup2_flatten = hog_overlap_unsup2.view(-1, 1)
                 hog_unover_flatten = hog_unover.view(-1, 1)
+                # hog_net_unsup1_pre = hog_net_unsup1_pre.view(-1, 1)
+                # hog_net_unsup2_pre = hog_net_unsup2_pre.view(-1, 1)
                 # hog_overlap_unsup1_reverse_flatten = hog_overlap_unsup1_reverse.view(-1, 1)
                 # hog_overlap_unsup2_reverse_flatten = hog_overlap_unsup2_reverse.view(-1, 1)
-                hog_unover_reverse_flatten = hog_unover_reverse.view(-1, 1)
+                # hog_unover_reverse_flatten = hog_unover_reverse.view(-1, 1)
 
-                hog_neg = []
-                hog_neg.append(hog_unover_flatten)
-                hog_neg.append(hog_unover_reverse_flatten)
+                # hog_neg = []
+                # hog_neg.append(hog_net_unsup1_pre)
+                # hog_neg.append(hog_net_unsup2_pre)
+                # hog_neg = torch.cat(hog_neg, dim=1) #[n, 2]
+
+                # hog_neg = []
+                # hog_neg.append(hog_unover_flatten)
+                # hog_neg.append(hog_unover_reverse_flatten)
                 # hog_neg.append(hog_overlap_unsup1_reverse_flatten)
                 # hog_neg.append(hog_overlap_unsup2_reverse_flatten)
-                hog_neg = torch.cat(hog_neg, dim=1) #[n, 4]
+                # hog_neg = torch.cat(hog_neg, dim=1) #[n, 4]
 
                 # context-aware contrastive loss
                 eps = 1e-8
                 # positive similarity
                 pos1 = (hog_overlap_unsup1_flatten * hog_overlap_unsup2_flatten.detach()).sum(-1, keepdim=True) / args.temp  # [n, 1]
                 pos2 = (hog_overlap_unsup1_flatten.detach() * hog_overlap_unsup2_flatten).sum(-1, keepdim=True) / args.temp  # [n, 1]
-                # pos = (hog_overlap_unsup1_flatten * hog_overlap_unsup2_flatten).sum(-1, keepdim=True) / args.temp  # [n, 1]
 
                 # negative overlap1
-                logits1_neg_idx, neg_max1 = torch.utils.checkpoint.checkpoint(logits_run, pos1, hog_overlap_unsup1_flatten, hog_neg, mask1_detach)
-                # logits1_neg_idx, neg_max1 = torch.utils.checkpoint.checkpoint(logits_run, pos, hog_overlap_unsup1_flatten, hog_neg, mask1_detach)
+                logits1_neg_idx, neg_max1 = torch.utils.checkpoint.checkpoint(logits_run, pos1, hog_overlap_unsup1_flatten, hog_unover_flatten)
+                # logits1_neg_idx, neg_max1 = torch.utils.checkpoint.checkpoint(logits_run, pos1, hog_overlap_unsup1_flatten, hog_neg)
                 logits1 = torch.exp(pos1 - neg_max1).squeeze(-1) / (logits1_neg_idx + eps)
-                # logits1 = torch.exp(pos - neg_max1).squeeze(-1) / (logits1_neg_idx + eps)
+                # print('\n logits1 7777777777777777777777777777777777777770\n', logits1)
+                # print('\n pos1 - neg_max1 7777777777777777777777777777777777777770\n', pos1 - neg_max1)
+                # print('\n torch.exp(pos1 - neg_max1).squeeze(-1) 7777777777777777777777777777777777777770\n',torch.exp(pos1 - neg_max1).squeeze(-1))
                 loss1 = -torch.log(logits1 + eps)
+                # print('\n loss1 7777777777777777777777777777777777777770\n', loss1)
                 loss1 = loss1.sum()/(loss1.numel() + 1e-12)
+                # print('\n loss1 7777777777777777777777777777777777777770\n', loss1)
 
                 # negative overlap2
-                logits2_neg_idx, neg_max2 = torch.utils.checkpoint.checkpoint(logits_run, pos2, hog_overlap_unsup2_flatten, hog_neg, mask2_detach)
-                # logits2_neg_idx, neg_max2 = torch.utils.checkpoint.checkpoint(logits_run, pos, hog_overlap_unsup2_flatten, hog_neg, mask2_detach)
+                logits2_neg_idx, neg_max2 = torch.utils.checkpoint.checkpoint(logits_run, pos2, hog_overlap_unsup2_flatten, hog_unover_flatten)
+                # logits2_neg_idx, neg_max2 = torch.utils.checkpoint.checkpoint(logits_run, pos2, hog_overlap_unsup2_flatten, hog_neg)
                 logits2 = torch.exp(pos2 - neg_max2).squeeze(-1) / (logits2_neg_idx + eps)
-                # logits2 = torch.exp(pos - neg_max2).squeeze(-1) / (logits2_neg_idx + eps)
+                # print('\n logits2 7777777777777777777777777777777777777771\n',logits2)
+                # print('\n pos2 - neg_max2 7777777777777777777777777777777777777770\n', pos2 - neg_max2)
+                # print('\n torch.exp(pos2 - neg_max2).squeeze(-1) 7777777777777777777777777777777777777770\n', torch.exp(pos2 - neg_max2).squeeze(-1))
                 loss2 = -torch.log(logits2 + eps)
+                # print('\n loss2 7777777777777777777777777777777777777771\n', loss2)
                 loss2 = loss2.sum() / (loss2.numel() + 1e-12)
+                # print('\n loss2 7777777777777777777777777777777777777771\n', loss2)
+
 
                 # loss_pos = criterion_MSE(hog_overlap_unsup1, hog_overlap_unsup2)
                 # loss_neg1 = criterion_MSE(hog_overlap_unsup1 * mask1, hog_unover * mask1)
@@ -413,6 +446,7 @@ def train_semi_net(net,
                 # loss_unsup = (loss_pos - loss_neg) * args.loss_unsup_weight
                 loss_unsup = (loss1 + loss2) * args.loss_unsup_weight
                 total_loss = loss_sup + loss_unsup
+                # print("\n loss1, loss2, loss_unsup 777777777777777777777777777777772\n", loss1, loss2, loss_unsup)
 
                 # # moco
                 # logits1, labels1 = moco(hog_overlap_unsup1_flatten, hog_overlap_unsup2_flatten, hog_unover_flatten)
@@ -564,7 +598,7 @@ if __name__ == '__main__':
     net.to(device=device)
     garbo_filter = GaborFilters(in_channels=1).to(device=device)
     hog = HOGLayer(nbins=12, pool=8).to(device=device)
-    # hog = HOGLayer(nbins=12, pool=16).to(device=device)
+    hog2 = HOGLayer(nbins=12, pool=20).to(device=device)
     projector = projection(in_dim=12, out_dim=12).to(device=device)
 
     try:
@@ -574,6 +608,7 @@ if __name__ == '__main__':
                                projector = projector,
                                garbo_filter = garbo_filter,
                                hog = hog,
+                               hog2 = hog2,
                                args=args,
                                epochs=args.epochs,
                                sup_batch_size=args.sup_batch_size,
