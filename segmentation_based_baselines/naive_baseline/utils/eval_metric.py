@@ -205,7 +205,8 @@ def thr_eval(name_in):
             pre_points = tuple2list(np.where(pre_image!=0))
             gt_tree = cKDTree(gt_points)
 
-            for ii, thr in enumerate([1,5,10]):
+            for ii, thr in enumerate([1]):
+            # for ii, thr in enumerate([1,5,10]):
             #for ii,thr in enumerate([2,5,10]):
                 if len(pre_points):
                     # recall
