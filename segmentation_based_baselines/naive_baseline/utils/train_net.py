@@ -35,7 +35,7 @@ def train_net(net,
 
     train = BasicDataset(args,False)
     val = BasicDataset(args,True)
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=4)
+    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1)
     val_loader = DataLoader(val, batch_size=1, shuffle=False,  pin_memory=True, drop_last=False, num_workers=1)
     n_val = len(val)
     n_train = len(train)
@@ -58,10 +58,18 @@ def train_net(net,
         path_checkpoint = args.load_checkpoint # checkpont path
         checkpoint = torch.load(path_checkpoint) # load checkpoint
         net.load_state_dict(checkpoint['net']) # load parameter
-        optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
+        # optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
         start_epoch = checkpoint['epoch'] # set epoch
-        lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+        # lr_schedule.load_state_dict(checkpoint['lr_schedule'])
         global_step = (start_epoch + 1) * (n_train // batch_size + 1)
+
+        if args.resume_epoch > 0:
+            for i in range(args.resume_epoch):
+                for j in range(args.iter_per_epoch):
+                    optimizer.zero_grad()
+                    optimizer.step()
+                lr_schedule.step()
+
     else:
         global_step = 0
     #
@@ -92,7 +100,7 @@ def train_net(net,
                 # save checkpoint
                 # if (global_step % (n_train // (batch_size)) == 0):
                 # if (epoch + 1) % 2 == 0:
-                if (global_step % ((n_train // batch_size) + 1) == 0) and (epoch + 1) % 10 == 0:
+                if (global_step % ((n_train // batch_size) + 1) == 0) and (epoch + 1) % 500 == 0:
                     # svae validation and plot
                     valid_score = eval_net(args,net,val_loader,device)
                     # scheduler.step(val_score)

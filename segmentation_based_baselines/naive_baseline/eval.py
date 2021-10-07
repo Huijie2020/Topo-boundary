@@ -74,12 +74,12 @@ def eval_net(args,net,loader, device):
                 mask_save = torch.mean(torch.stack(mask_save_list), 0)
 
                 if not args.test:
-                    # mask_save = mask_save.cpu().detach().numpy()
-                    # mask_max = np.max(mask_save)
-                    # mask_min = np.min(mask_save)
-                    # mask_save = (mask_save - mask_min)/(mask_max - mask_min)
-                    # Image.fromarray(mask_save * 255) \
-                    #     .convert('L').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
+                    mask_save = mask_save.cpu().detach().numpy()
+                    mask_max = np.max(mask_save)
+                    mask_min = np.min(mask_save)
+                    mask_save = (mask_save - mask_min)/(mask_max - mask_min)
+                    Image.fromarray(mask_save * 255) \
+                        .convert('L').save(os.path.join('./records/valid/segmentation', name[0] + '.png'))
                     pred = torch.sigmoid(mask_pred)
                     pred = (pred > 0.1).float()
                     tot += dice_coeff(pred, mask, args).item()
