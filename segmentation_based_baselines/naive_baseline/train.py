@@ -184,7 +184,7 @@ def train_semi_net(net,
         checkpoint = torch.load(path_checkpoint) # load checkpoint
         net.load_state_dict(checkpoint['net']) # load parameter
 
-        if args.whether_fintune:
+        if args.whether_finetune:
             global_step = 0
         else:
             optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
