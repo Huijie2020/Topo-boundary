@@ -187,39 +187,39 @@ def train_semi_net(net,
         if args.whether_finetune:
             global_step = 0
         else:
-            optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
+            # optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
             start_epoch = checkpoint['epoch'] # set epoch
-            lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+            # lr_schedule.load_state_dict(checkpoint['lr_schedule'])
             global_step = (start_epoch + 1) * (args.iter_per_epoch)
 
         # load optimizer and lr_scheduler
-        # if args.resume_epoch > 0:
-        #     for i in range(args.resume_epoch):
-        #         for j in range(args.iter_per_epoch):
-        #             optimizer.zero_grad()
-        #             optimizer.step()
-        #         lr_schedule.step()
+        if args.resume_epoch > 0:
+            for i in range(args.resume_epoch):
+                for j in range(args.iter_per_epoch):
+                    optimizer.zero_grad()
+                    optimizer.step()
+                lr_schedule.step()
 
-        val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
-        valid_score = eval_net(args, net, val_loader, device)
-        writer.add_scalar('valid', valid_score, global_step)
-        # save checkpoint
-        checkpoint_best = {
-            "net": net.state_dict(),
-            # 'optimizer': optimizer.state_dict(),
-            "epoch": start_epoch
-            # 'lr_schedule': lr_schedule.state_dict()
-        }
-        if not os.path.isdir(args.checkpoints_dir):
-            os.mkdir(args.checkpoints_dir)
-        # save best model
-        if valid_score > best_valid_socre:
-            best_valid_socre = valid_score
-            with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
-                f.write(str(best_valid_socre))
-            f.close()
-            torch.save(checkpoint_best,
-                       args.checkpoints_dir + 'naive_baseline_best.pth')
+        # val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
+        # valid_score = eval_net(args, net, val_loader, device)
+        # writer.add_scalar('valid', valid_score, global_step)
+        # # save checkpoint
+        # checkpoint_best = {
+        #     "net": net.state_dict(),
+        #     # 'optimizer': optimizer.state_dict(),
+        #     "epoch": start_epoch
+        #     # 'lr_schedule': lr_schedule.state_dict()
+        # }
+        # if not os.path.isdir(args.checkpoints_dir):
+        #     os.mkdir(args.checkpoints_dir)
+        # # save best model
+        # if valid_score > best_valid_socre:
+        #     best_valid_socre = valid_score
+        #     with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+        #         f.write(str(best_valid_socre))
+        #     f.close()
+        #     torch.save(checkpoint_best,
+        #                args.checkpoints_dir + 'naive_baseline_best.pth')
     else:
         global_step = 0
 
@@ -230,32 +230,35 @@ def train_semi_net(net,
     pooler = nn.AvgPool2d((8, 8), stride=(8, 8), padding=0, ceil_mode=False, count_include_pad=True)
     # pooler = nn.AvgPool2d((16, 16), stride=(16, 16), padding=0, ceil_mode=False, count_include_pad=True)
 
-    sup_train_loader = DataLoader(sup_train, batch_size=sup_batch_size, shuffle=True, pin_memory=True, num_workers=4)
-    unsup_train_loader = DataLoader(unsup_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True,
-                                    num_workers=4)
-    val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
-    sup_train_loader_iter = iter(sup_train_loader)
-    unsup_train_loader_iter = iter(unsup_train_loader)
-
     for epoch in range(start_epoch + 1, epochs):
         # load supervised and unsupervised data
+        sup_train_loader = DataLoader(sup_train, batch_size=sup_batch_size, shuffle=True, pin_memory=True,
+                                      num_workers=4)
+        unsup_train_loader = DataLoader(unsup_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True,
+                                        num_workers=4)
+        # val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
+        # sup_train_loader_iter = iter(sup_train_loader)
+        # unsup_train_loader_iter = iter(unsup_train_loader)
+        train_loader = iter(zip(cycle(sup_train_loader), cycle(unsup_train_loader)))
+
         tbar = tqdm(range(args.iter_per_epoch), desc=f'Epoch {epoch + 1}/{epochs}', ncols=135)
         print('learning rate **********************:', optimizer.state_dict()['param_groups'][0]['lr'])
         net.train()
 
         for batch_idx in tbar:
             # load data
-            try:
-                sup_l = next(sup_train_loader_iter)
-            except:
-                sup_train_loader_iter = iter(sup_train_loader)
-                sup_l = next(sup_train_loader_iter)
-
-            try:
-                unsup_l = next(unsup_train_loader_iter)
-            except:
-                unsup_train_loader_iter = iter(unsup_train_loader)
-                unsup_l = next(unsup_train_loader_iter)
+            # try:
+            #     sup_l = next(sup_train_loader_iter)
+            # except:
+            #     sup_train_loader_iter = iter(sup_train_loader)
+            #     sup_l = next(sup_train_loader_iter)
+            #
+            # try:
+            #     unsup_l = next(unsup_train_loader_iter)
+            # except:
+            #     unsup_train_loader_iter = iter(unsup_train_loader)
+            #     unsup_l = next(unsup_train_loader_iter)
+            sup_l, unsup_l = next(train_loader)
 
             image_l, mask_l, name_l = sup_l['image'], sup_l['mask'], sup_l['name']
             image_l, mask_l = image_l.to(device=device, dtype=torch.float32), mask_l.to(device=device, dtype=torch.float32)
