@@ -42,7 +42,14 @@ class BasicDataset(Dataset):
                 self.ids = data_load['train_sup']
                 print('=================')
                 print('Training mode: Training supervised data length {}.'.format(len(self.ids)))
-        
+
+        brightness = (1, 10)
+        contrast = (1, 10)
+        saturation = (1, 10)
+        hue = (-0.5, 0.5)
+        self.train_transform = transforms.Compose([
+                transforms.ColorJitter(brightness, contrast, saturation, hue)
+            ])
         
 
     def __len__(self):
@@ -50,116 +57,82 @@ class BasicDataset(Dataset):
 
     # random crop image and gt
     def random_crop(self, image, mask, size):
+        # Pu: remove those resizing code.
         w, h = image.size
-        newW, newH = int(w), int(h)
-        assert newW > 0 and newH > 0, 'Scale is too small'
-        image = image.resize((newW, newH))
-        mask = mask.resize((newW, newH))
         crop_h = size
         crop_w = size
 
         start_x = np.random.randint(0, w - crop_w)
         start_y = np.random.randint(0, h - crop_h)
 
-        image_nd = np.array(image)
-        mask_nd = np.array(mask)
+        # Pu: you may just use image.crop((start_x, start_y. start_x + crop_w, start_y + crop_h))
+        # image_nd = np.array(image)
+        # mask_nd = np.array(mask)
+        #
+        # image_nd = image_nd[start_y: start_y + crop_h, start_x: start_x + crop_w,  :]
+        # mask_nd = mask_nd[start_y: start_y + crop_h, start_x: start_x + crop_w]
+        #
+        # img_crop = Image.fromarray(image_nd)
+        # mask_crop = Image.fromarray(mask_nd)
 
-        image_nd = image_nd[start_y: start_y + crop_h, start_x: start_x + crop_w,  :]
-        mask_nd = mask_nd[start_y: start_y + crop_h, start_x: start_x + crop_w]
-
-        img_crop = Image.fromarray(image_nd)
-        mask_crop = Image.fromarray(mask_nd)
+        img_crop = image.crop((start_x, start_y, start_x + crop_w, start_y + crop_h))
+        mask_crop = mask.crop((start_x, start_y, start_x + crop_w, start_y + crop_h))
 
         return img_crop, mask_crop
 
     def data_augu(self, image, mask):
+        # Pu: this is awkward.
         whether_hori_flip = random.choice([0, 1])
         whether_ver_flip = random.choice([0, 1])
         whether_colorjitter = random.choice([0, 1])
-        rotate_angle = random.choice([0, 90, 180, 270])
+        rotate_angle = random.choice([0, 1, 2, 3])
 
-        test_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(whether_hori_flip),
-            transforms.RandomVerticalFlip(whether_ver_flip)
-        ])
+        if whether_colorjitter > 0:
+            image = self.train_transform(image)
 
-        if whether_colorjitter == 0:
-            train_transform = transforms.Compose([
-                transforms.RandomHorizontalFlip(whether_hori_flip),
-                transforms.RandomVerticalFlip(whether_ver_flip)
-            ])
-        else:
-            brightness = (1, 10)
-            contrast = (1, 10)
-            saturation = (1, 10)
-            hue = (-0.5, 0.5)
-            train_transform = transforms.Compose([
-                transforms.RandomHorizontalFlip(whether_hori_flip),
-                transforms.RandomVerticalFlip(whether_ver_flip),
-                transforms.ColorJitter(brightness, contrast, saturation, hue)
-            ])
+        if whether_hori_flip:
+            image = TF.hflip(image)
+            mask = TF.hflip(mask)
 
-        image_trans = train_transform(image)
-        image_trans = TF.rotate(image_trans, rotate_angle)
-        image_nd = np.array(image_trans)
+        if whether_ver_flip:
+            image = TF.vflip(image)
+            mask = TF.vflip(mask)
 
-        mask_trans = test_transform(mask)
-        mask_trans = TF.rotate(mask_trans, rotate_angle)
-        mask_nd = np.array(mask_trans)
+        image_nd = np.array(image)
+        mask_nd = np.array(mask)
+
+        image_nd = np.rot90(image_nd, k=rotate_angle, axes=(0, 1)).copy()
+        mask_nd = np.rot90(mask_nd, k=rotate_angle, axes=(0, 1)).copy()
 
         return image_nd, mask_nd
 
 
     # rotation image [0, 90, 180, 270]
     def rotate_img(self, image, mask):
-        # resize image and mask
-        w, h = image.size
-        newW, newH = int(w), int(h)
-        assert newW > 0 and newH > 0, 'Scale is too small'
-        image = image.resize((newW, newH))
-        mask = mask.resize((newW, newH))
-
+        # Pu: remove those resizing code
         image_nd_list = []
         image_nd_0 = np.array(image)  # --> (h, w, c)
         mask_nd = np.array(mask)
         image_nd_list.append(image_nd_0)
 
         # rotation
-        angle_list = [90, 180, 270]
-        for angle in angle_list:
-            image_rotate = TF.rotate(image, angle)
-            image_rotate_nd = np.array(image_rotate)
+        # Pu: it might be better to use np.rot90(img, k=1, axes=(0, 1)) k=1 for 90 degrees.
+        for i in range(1, 4):
+            image_rotate_nd = np.rot90(image_nd_0, k=i, axes=(0, 1)).copy()
             image_nd_list.append(image_rotate_nd)
 
-        img_nd = np.stack(image_nd_list, axis = 0)  # --> (n, h, w, c)
+        img_nd = np.stack(image_nd_list, axis=0)  # --> (n, h, w, c)
         return img_nd, mask_nd
 
     # change to array
     def toarray(self, image, mask):
-        w, h = image.size
-        newW, newH = int(w), int(h)
-        assert newW > 0 and newH > 0, 'Scale is too small'
-        image = image.resize((newW, newH))
-        mask = mask.resize((newW, newH))
-
+        # Pu: remove those resizing code
         image_nd = np.array(image)
         mask_nd = np.array(mask)
-
         return image_nd, mask_nd
 
     @classmethod
     def preprocess(cls, img_nd, whether_mask, threshold, whether_test, whether_valid, whether_tta):
-        # w, h = pil_img.size
-        # newW, newH = int(w), int(h)
-        # assert newW > 0 and newH > 0, 'Scale is too small'
-        # pil_img = pil_img.resize((newW, newH))
-        # img_nd = np.array(pil_img)
-        # if whether_mask:
-        #     # img_nd = img_nd[:,:,0]
-        #     img_nd = img_nd / 255.0
-        #     # img_nd[img_nd < threshold] = 0
-        #     # img_nd[img_nd >= threshold] = 1
-
         # normalize image
         def trans(img):
             if len(img.shape) == 2:
@@ -183,17 +156,8 @@ class BasicDataset(Dataset):
             img_trans = trans(img_nd)
         return img_trans
 
-        # if len(img_nd.shape) == 2:
-        #     img_nd = np.expand_dims(img_nd, axis=2)
-
-        # img_trans = img_nd.transpose((2, 0, 1)) # -> [c, h, w]
-        # if img_trans.max() > 1:
-        #     img_trans = img_trans / 255
-        # return img_trans
-
     def __getitem__(self, i):
         idx = self.ids[i]
-        # img_file = os.path.join(self.imgs_dir, idx + '.tiff')
         img_file = os.path.join(self.imgs_dir, idx + '.png')
         mask_file = os.path.join(self.masks_dir, idx + '.png')
         img = Image.open(img_file)
@@ -235,7 +199,7 @@ class BasicDataset(Dataset):
                 img, mask = self.toarray(img, mask)
 
         img = self.preprocess(img, False, self.threshold, self.test, self.valid, self.tta)
-        mask = self.preprocess(mask,True, self.threshold, self.test, self.valid, self.tta)
+        mask = self.preprocess(mask, True, self.threshold, self.test, self.valid, self.tta)
 
         # if self.test or self.valid:
         #     sub_imgs = self.crop(img, self.crop_size)
@@ -244,5 +208,5 @@ class BasicDataset(Dataset):
         return {
             'image': torch.from_numpy(img).type(torch.FloatTensor), #[n, c, h, w]
             'mask': torch.from_numpy(mask).type(torch.FloatTensor),
-            'name':idx
+            'name': idx
         }
