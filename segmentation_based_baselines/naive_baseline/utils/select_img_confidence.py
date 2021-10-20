@@ -8,16 +8,16 @@ import random
 
 
 
-source_dir = '/mnt/git/Topo-boundary/conn_experiment/expriment/08032021_unet_baseline_0.01data_99unsup/exp1.5.4_hog_ta_tta_contr_maskthr0.5_projector_unsupweight0.1_temp0.07_lr0.0005_repeat_hz/iter1_1600from1998_img_fromiter0_1/1998gt_thr0_pre_from_iter0'
+source_dir = '/mnt/git/Topo-boundary/conn_experiment/expriment/08032021_unet_baseline_0.01data_99unsup/exp1.5.4_hog_ta_tta_contr_maskthr0.5_projector_unsupweight0.1_temp0.07_lr0.0005_repeat_hz/iter_500_step/iter3/1998gt_thr0_pre_from_iter1'
 source_img_dir = os.path.join(source_dir, 'segmentation') # 1998 segmentation folder
 # source_json = '/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1998test(0.01data).json' # load 1998 image name
 source_json = '/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1data_99unsup_100val_431test.json' # load 1998 image name
 
 tar_all_detail_json = os.path.join(source_dir, 'confi_detail_1998.json')
-tar_select_detail_json = os.path.join(source_dir, 'confi_detail_1600.json')
-tar_select_img_json = os.path.join(source_dir, 'name_1600from1998.json')
+tar_select_detail_json = os.path.join(source_dir, 'confi_detail_1500.json')
+tar_select_img_json = os.path.join(source_dir, 'name_1500from1998.json')
 # tar_select_img_iter_json = os.path.join(source_dir, 'name_1600from1998_iter.json')
-tar_other_img_json = os.path.join(source_dir, 'name_398from1998.json')
+tar_other_img_json = os.path.join(source_dir, 'name_998from1998.json')
 
 # tar_all_detail_json = os.path.join(source_dir, 'confi_detail_1917.json')
 # tar_select_detail_json = os.path.join(source_dir, 'confi_detail_1534.json')
@@ -31,7 +31,7 @@ jf.close()
 
 img_all = data["train_unsup"]
 # img_all = data["test"]
-n_select = 1600
+n_select = 1500
 
 image_detail = []
 metric_list = []
@@ -54,7 +54,7 @@ for i in tqdm(range(len(img_all))):
         file_dic["confidence"] = sel_metric
     else:
         # sel_metric = (seg_nd.sum()) / (np.count_nonzero(seg_nd))
-        sel_metric = (seg_nd.sum()) / (np.size)
+        sel_metric = (seg_nd.sum()) / (seg_nd.size)
         file_dic["confidence"] = sel_metric
 
     metric_list.append(sel_metric)
@@ -95,7 +95,7 @@ with open(tar_select_detail_json,'w') as jf:
                 },jf)
 
 with open(tar_select_img_json,'w') as jf:
-    json.dump({'name_1600from1998':select_name
+    json.dump({'name_1500from1998':select_name
                 },jf)
 #
 # with open(tar_select_img_iter_json,'w') as jf:
@@ -103,7 +103,7 @@ with open(tar_select_img_json,'w') as jf:
 #                 },jf)
 #
 with open(tar_other_img_json,'w') as jf:
-    json.dump({'name_398from1998':other_name
+    json.dump({'name_998from1998':other_name
                 },jf)
 
 
@@ -111,29 +111,43 @@ with open(tar_other_img_json,'w') as jf:
 # def list_union (lst1, lst2):
 #     return list(set(lst1).union(set(lst2)))
 #
-# source_iter_pre_json = '/mnt/git/Topo-boundary/conn_experiment/expriment/09043021_unet_baseline_0.05data_95unsup/exp5.3_hog_ta_tta_unsupweight1_lr0.0005_iter/iter1_1534from1979_img_fromiter0_0906/1917gt_thr0_from_iter0/name_1534from1917.json'
+# source_iter_pre_json = os.path.join(source_dir, 'name_1600from1998_iter1.json')
 # # tar_union_two_json = '/mnt/git/Topo-boundary/conn_experiment/expriment/08032021_unet_baseline_0.11data_99unsup/exp1.3_hog_ta_tta_unsupweight1_lr0.0005_iter/iter2_1600from1998_img_fromiter1_0831/1998gt_thr0_pre_from_iter1/union_two_image_list.json' # new file name json
 # tar_union_two_json = os.path.join(source_dir, 'union_two_image_list.json') # new file name json
 #
 # with open(source_iter_pre_json,'r') as jf:
 #     data_pre = json.load(jf)
 # jf.close()
-# name_1600from1998_pre = data_pre["name_1534from1917"]
+# name_1600from1998_pre = data_pre["name_1600from1998"]
 #
 # with open(tar_select_img_json,'r') as jf:
 #     data_current = json.load(jf)
 # jf.close()
-# name_1600from1998_current = data_current["name_1534from1917"]
+# name_1600from1998_current = data_current["name_1600from1998"]
 #
 # # union this and pre
 # union_two_image_list = list_union (name_1600from1998_current, name_1600from1998_pre)
 # # lenght union_two_image_list
-# print("union_two_image_list", len(union_two_image_list)) # union_two_image_list 1670 # union_two_image_list 3726 # union_two_image_list 1610
+# print("union_two_image_list", len(union_two_image_list))
+# # union_two_image_list 1670 (1% spacenet mse)
+# # union_two_image_list 3726 (1% deepglobe mse)
+# # union_two_image_list 1610 (1% spacenet mse)
+#
+# # union_two_image_list 1652 (1% spacenet contrastive loss)
 #
 # # write to json
 # with open(tar_union_two_json,'w') as jf:
 #     json.dump({'union_two_image_list':union_two_image_list
 #                 },jf)
+
+
+
+
+
+with open(tar_select_img_json,'r') as jf:
+    data_count = json.load(jf)
+jf.close()
+data_count_num = data_count["name_1500from1998"]
 
 
 

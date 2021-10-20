@@ -67,11 +67,11 @@ import random
 
 # split according to sup
 def split_dataset():
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1data_99unsup_100val_431test.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/five_shot/data_split_fiveshot_100val_431test.json','r') as jf:
         data = json.load(jf)
     with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/origianl_data_split/data_split_100data_100val_431test.json','r') as jf:
         data_2018 = json.load(jf)
-    train_sup_len = len(data_2018['train'])
+    train_sup_len = len(data['train_sup'])
     # pos_unsup_len = len(data_addsup['pos_unsup'])
     # neg_unsup_len = len(data_addsup['neg_unsup'])
     train_unsup_len = len(data['train_unsup'])
@@ -79,7 +79,7 @@ def split_dataset():
     test_len = len(data['test'])
     pretrain_len = round(len(data['pretrain']))
 
-    train_sup_img = data_2018['train']
+    train_sup_img = data['train_sup']
     # pos_unsup_img =data_addsup['pos_unsup']
     # neg_unsup_img = data_addsup['neg_unsup']
     # train_addsup_img = data_addsup['overlap_id']
@@ -96,17 +96,17 @@ def split_dataset():
     #
     # print('train_totalsup_img length:', len(train_totalsup_img))
 
-    train_sup_last = random.sample(train_sup_img, 1958)
+    train_sup_last = random.sample(train_sup_img, 2)
 
     train_sup_new = []
-    for i in range(2):
+    for i in range(1208):
         random.shuffle(train_sup_img)
         for i in range(len(train_sup_img)):
             train_sup_new.append(train_sup_img[i])
     for i in range(len(train_sup_last)):
         train_sup_new.append(train_sup_last[i])
 
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1data_pseudo1998_sup5994_unsup1998.json','w') as jf:
+    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/five_shot/data_split_5shot_sup6040_unsup2013.json','w') as jf:
     # with open('./scripts/data_split_100val.json','w') as jf:
         json.dump({'train_sup':train_sup_new[:len(train_sup_new)],
                    'train_unsup': train_unsup_img[:len(train_unsup_img)],
