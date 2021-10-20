@@ -127,23 +127,6 @@ def logits_run(pos, hog_over_flatten, hog_neg, mask):
     logits_neg_idx = (torch.exp(neg_idx - neg_max) * mask_idx).sum(-1)  # [n, ]
     return logits_neg_idx, neg_max
 
-def moco(pos1, pos2, neg):
-    # positive logits: Nx1
-	l_pos = torch.einsum('nc,nc->n', [pos1, pos2]).unsqueeze(-1)
-	# negative logits: NxK
-	l_neg = torch.einsum('nc,ck->nk', [pos1, neg.T.detach()])
-
-	# logits: Nx(1+K)
-	logits = torch.cat([l_pos, l_neg], dim=1)
-
-	# apply temperature
-	logits /= args.temp
-
-	# labels: positive key indicators
-	labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
-
-	return logits, labels
-
 
 def train_semi_net(net,
               projector,
@@ -173,6 +156,56 @@ def train_semi_net(net,
     best_valid_socre = 0
 
     if args.resume == True:
+
+        # # load best valid score
+        # path_best_valid_score = args.checkpoints_dir + 'naive_baseline_best_valid_score.txt'
+        # with open(path_best_valid_score, 'r') as f:
+        #     best_valid_socre = float(f.read())
+        # f.close()
+        #
+        # # load checkpoint
+        # for i in range(1, 110, 2):
+        #     path_checkpoint = args.load_checkpoint + str(i) + '.pth'
+        #     checkpoint = torch.load(path_checkpoint)  # load checkpoint
+        #     net.load_state_dict(checkpoint['net'])  # load parameter
+        #
+        #     if args.whether_finetune:
+        #         global_step = 0
+        #     else:
+        #         optimizer.load_state_dict(checkpoint['optimizer'])  # load optimizer
+        #         start_epoch = checkpoint['epoch']  # set epoch
+        #         lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+        #         global_step = (start_epoch + 1) * (args.iter_per_epoch)
+        #
+        #     # # load optimizer and lr_scheduler
+        #     # if args.resume_epoch > 0:
+        #     #     for i in range(args.resume_epoch):
+        #     #         for j in range(args.iter_per_epoch):
+        #     #             optimizer.zero_grad()
+        #     #             optimizer.step()
+        #     #         lr_schedule.step()
+        #
+        #     val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
+        #     valid_score = eval_net(args, net, val_loader, device)
+        #     writer.add_scalar('valid', valid_score, global_step)
+        #     # save checkpoint
+        #     checkpoint_best = {
+        #         "net": net.state_dict(),
+        #         # 'optimizer': optimizer.state_dict(),
+        #         "epoch": start_epoch
+        #         # 'lr_schedule': lr_schedule.state_dict()
+        #     }
+        #     # save best model
+        #     if valid_score > best_valid_socre:
+        #         best_valid_socre = valid_score
+        #         with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+        #             f.write(str(best_valid_socre))
+        #         f.close()
+        #         torch.save(checkpoint_best,
+        #                    args.checkpoints_dir + 'naive_baseline_best.pth')
+
+
+
         # load best valid score
         path_best_valid_score = args.checkpoints_dir + 'naive_baseline_best_valid_score.txt'
         with open(path_best_valid_score, 'r') as f:
@@ -187,39 +220,41 @@ def train_semi_net(net,
         if args.whether_finetune:
             global_step = 0
         else:
-            # optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
+            optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
             start_epoch = checkpoint['epoch'] # set epoch
-            # lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+            lr_schedule.load_state_dict(checkpoint['lr_schedule'])
             global_step = (start_epoch + 1) * (args.iter_per_epoch)
 
-        # load optimizer and lr_scheduler
-        if args.resume_epoch > 0:
-            for i in range(args.resume_epoch):
-                for j in range(args.iter_per_epoch):
-                    optimizer.zero_grad()
-                    optimizer.step()
-                lr_schedule.step()
+        # # load optimizer and lr_scheduler
+        # if args.resume_epoch > 0:
+        #     for i in range(args.resume_epoch):
+        #         for j in range(args.iter_per_epoch):
+        #             optimizer.zero_grad()
+        #             optimizer.step()
+        #         lr_schedule.step()
 
-        # val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
-        # valid_score = eval_net(args, net, val_loader, device)
-        # writer.add_scalar('valid', valid_score, global_step)
-        # # save checkpoint
-        # checkpoint_best = {
-        #     "net": net.state_dict(),
-        #     # 'optimizer': optimizer.state_dict(),
-        #     "epoch": start_epoch
-        #     # 'lr_schedule': lr_schedule.state_dict()
-        # }
-        # if not os.path.isdir(args.checkpoints_dir):
-        #     os.mkdir(args.checkpoints_dir)
-        # # save best model
-        # if valid_score > best_valid_socre:
-        #     best_valid_socre = valid_score
-        #     with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
-        #         f.write(str(best_valid_socre))
-        #     f.close()
-        #     torch.save(checkpoint_best,
-        #                args.checkpoints_dir + 'naive_baseline_best.pth')
+        val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
+        valid_score = eval_net(args, net, val_loader, device)
+        writer.add_scalar('valid', valid_score, global_step)
+        # save checkpoint
+        checkpoint_best = {
+            "net": net.state_dict(),
+            # 'optimizer': optimizer.state_dict(),
+            "epoch": start_epoch
+            # 'lr_schedule': lr_schedule.state_dict()
+        }
+        if not os.path.isdir(args.checkpoints_dir):
+            os.mkdir(args.checkpoints_dir)
+        # save best model
+        if valid_score > best_valid_socre:
+            best_valid_socre = valid_score
+            with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+                f.write(str(best_valid_socre))
+            f.close()
+            torch.save(checkpoint_best,
+                       args.checkpoints_dir + 'naive_baseline_best.pth')
+
+
     else:
         global_step = 0
 
@@ -228,7 +263,6 @@ def train_semi_net(net,
     criterion_BCEwo = nn.CrossEntropyLoss()
     criterion_MSE = nn.MSELoss()
     pooler = nn.AvgPool2d((8, 8), stride=(8, 8), padding=0, ceil_mode=False, count_include_pad=True)
-    # pooler = nn.AvgPool2d((16, 16), stride=(16, 16), padding=0, ceil_mode=False, count_include_pad=True)
 
     for epoch in range(start_epoch + 1, epochs):
         # load supervised and unsupervised data
@@ -417,28 +451,6 @@ def train_semi_net(net,
                 loss_unsup = (loss1 + loss2) * args.loss_unsup_weight
                 total_loss = loss_sup + loss_unsup
 
-                # # moco
-                # logits1, labels1 = moco(hog_overlap_unsup1_flatten, hog_overlap_unsup2_flatten, hog_unover_flatten)
-                # loss1 = criterion_BCEwo(logits1, labels1)
-                #
-                # logits2, labels2 = moco(hog_overlap_unsup2_flatten, hog_overlap_unsup1_flatten, hog_unover_flatten)
-                # loss2 = criterion_BCEwo(logits2, labels2)
-
-                # # cosine similarity
-                # eps = 1e-8
-                # pos_simi = F.cosine_similarity(hog_overlap_unsup1_flatten, hog_overlap_unsup2_flatten, dim=0) / 2 / args.temp
-                # logit_pos = torch.exp(pos_simi)
-                # # print('\n pos_simi, logit_pos, 000000000000000000 \n', pos_simi, logit_pos)
-                #
-                # neg1_simi = F.cosine_similarity(hog_overlap_unsup1_flatten, hog_unover_flatten, dim=0) / 2 / args.temp
-                # logit_neg1 = torch.exp(neg1_simi)
-                # loss1 = -torch.log(logit_pos / ((logit_pos + logit_neg1) + eps))
-                # # print('\n neg1_simi, logit_neg1, loss1 000000000000001\n', neg1_simi, logit_neg1, loss1)
-                #
-                # neg2_simi = F.cosine_similarity(hog_overlap_unsup2_flatten, hog_unover_flatten, dim=0) / 2 / args.temp
-                # logit_neg2 = torch.exp(neg2_simi)
-                # loss2 = -torch.log(logit_pos / ((logit_pos + logit_neg2) + eps))
-                # # print('\n neg2_simi, logit_neg2, loss2 000000000000002\n', neg2_simi, logit_neg2, loss2)
 
                 total_loss.backward()
                 optimizer.step()
@@ -468,30 +480,29 @@ def train_semi_net(net,
                 torch.save(checkpoint,
                            args.checkpoints_dir + 'naive_baseline_{}.pth'.format(epoch))
 
-        # validdation
-        # if ((global_step % (args.iter_per_epoch * args.save_per_epoch) == 0) and (epoch + 1) % args.save_per_epoch == 0) or ((global_step % args.iter_start_unsup == 0) and (epoch + 1 == 1)) :
-        if ((global_step % (args.iter_per_epoch * args.save_per_epoch) == 0) and (epoch + 1) % args.save_per_epoch == 0):
-            # save validation
-            val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=4)
-            valid_score = eval_net(args, net, val_loader, device)
-            writer.add_scalar('valid', valid_score, global_step)
-            # save checkpoint
-            checkpoint_best = {
-                "net": net.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                "epoch": epoch,
-                'lr_schedule': lr_schedule.state_dict()
-            }
-            if not os.path.isdir(args.checkpoints_dir):
-                os.mkdir(args.checkpoints_dir)
-            # save best model
-            if valid_score > best_valid_socre:
-                best_valid_socre = valid_score
-                with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
-                    f.write(str(best_valid_socre))
-                f.close()
-                torch.save(checkpoint_best,
-                           args.checkpoints_dir + 'naive_baseline_best.pth')
+        # # validdation
+        # if ((global_step % (args.iter_per_epoch * args.save_per_epoch) == 0) and (epoch + 1) % args.save_per_epoch == 0):
+        #     # save validation
+        #     val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=4)
+        #     valid_score = eval_net(args, net, val_loader, device)
+        #     writer.add_scalar('valid', valid_score, global_step)
+        #     # save checkpoint
+        #     checkpoint_best = {
+        #         "net": net.state_dict(),
+        #         'optimizer': optimizer.state_dict(),
+        #         "epoch": epoch,
+        #         'lr_schedule': lr_schedule.state_dict()
+        #     }
+        #     if not os.path.isdir(args.checkpoints_dir):
+        #         os.mkdir(args.checkpoints_dir)
+        #     # save best model
+        #     if valid_score > best_valid_socre:
+        #         best_valid_socre = valid_score
+        #         with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+        #             f.write(str(best_valid_socre))
+        #         f.close()
+        #         torch.save(checkpoint_best,
+        #                    args.checkpoints_dir + 'naive_baseline_best.pth')
 
         lr_schedule.step()
 
