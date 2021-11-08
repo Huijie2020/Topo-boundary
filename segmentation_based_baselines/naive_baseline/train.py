@@ -125,6 +125,7 @@ def logits_run(pos, hog_over_flatten, hog_neg, mask):
     mask_idx = torch.cat([torch.ones(mask.size(0), 1).float().cuda(), mask], 1)  # [n, 1+b]
     neg_max = torch.max(neg_idx, 1, keepdim=True)[0]  # [n, 1]
     logits_neg_idx = (torch.exp(neg_idx - neg_max) * mask_idx).sum(-1)  # [n, ]
+    # logits_neg_idx = (torch.exp(neg_idx - neg_max)).sum(-1)  # [n, ]
     return logits_neg_idx, neg_max
 
 
@@ -203,6 +204,9 @@ def train_semi_net(net,
         #         f.close()
         #         torch.save(checkpoint_best,
         #                    args.checkpoints_dir + 'naive_baseline_best.pth')
+
+
+
 
 
 
@@ -330,14 +334,20 @@ def train_semi_net(net,
                 net_unsup1_pre = torch.sigmoid(net(image_ul1))  # [batch_size, 1, H, W]
                 net_unsup2_pre = torch.sigmoid(net(image_ul2))
 
-                net_unsup1_pre = transform_back(net_unsup1_pre, flip_rotate_1)  # [batich_size, 1, 384, 384]
-                net_unsup2_pre = transform_back(net_unsup2_pre, flip_rotate_2)
-
+                if args.data_augumentation == True:
+                    net_unsup1_pre = transform_back(net_unsup1_pre, flip_rotate_1)  # [batich_size, 1, 384, 384]
+                    net_unsup2_pre = transform_back(net_unsup2_pre, flip_rotate_2)
+                else:
+                    pass
                 overlap_unsup1 = get_overlap(net_unsup1_pre, overlap1_ul, args.unsup_crop_in_size)
                 overlap_unsup2 = get_overlap(net_unsup2_pre, overlap2_ul, args.unsup_crop_in_size)
 
                 net_unover_pre = torch.sigmoid(net(image_unover))
-                net_unover_pre = transform_back(net_unover_pre, flip_rotate_unover)  # [2, 1, 256, 256]
+
+                if args.data_augumentation == True:
+                    net_unover_pre = transform_back(net_unover_pre, flip_rotate_unover)  # [2, 1, 256, 256]
+                else:
+                    pass
                 net_unover = get_overlap(net_unover_pre, unover_ul, args.unsup_unover_in_size)  # [2, 1, 256, 256]
 
                 # generate binary map for mask
