@@ -143,6 +143,19 @@ class UnsupDataset(Dataset):
 
         return image_nd, mask_nd, flip_rotate
 
+    def data_noaug(self, image, mask):
+        whether_hori_flip = 0
+        whether_ver_flip = 0
+        rotate_angle = 0
+
+        image_nd = np.array(image)
+        mask_nd = np.array(mask)
+
+
+        flip_rotate = [whether_hori_flip, whether_ver_flip, rotate_angle]
+
+        return image_nd, mask_nd, flip_rotate
+
     @classmethod
     def preprocess(cls, img):
         if len(img.shape) == 2:
@@ -189,18 +202,24 @@ class UnsupDataset(Dataset):
         else:
             # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
             image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image_unover, mask_unover, unover_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
-            image1 = np.array(image1)
-            mask1 = np.array(mask1)
-            image2 = np.array(image2)
-            mask2 = np.array(mask2)
-            image_unover = np.array(image_unover)
-            mask_unover = np.array(mask_unover)
-            # image3 = np.array(image3)
-            # mask3 = np.array(mask3)
-            # image4 = np.array(image4)
-            # mask4 = np.array(mask4)
-            # flip_rotate_1, flip_rotate_2, flip_rotate_3, flip_rotate_4 = None, None, None, None
-            flip_rotate_1, flip_rotate_2, flip_rotate_unover = None, None, None
+
+            image1, mask1, flip_rotate_1 = self.data_noaug(image1, mask1)
+            image2, mask2, flip_rotate_2 = self.data_noaug(image2, mask2)
+            image_unover, mask_unover, flip_rotate_unover = self.data_noaug(image_unover, mask_unover)
+
+            # image1 = np.array(image1)
+            # mask1 = np.array(mask1)
+            # image2 = np.array(image2)
+            # mask2 = np.array(mask2)
+            # image_unover = np.array(image_unover)
+            # mask_unover = np.array(mask_unover)
+            # # image3 = np.array(image3)
+            # # mask3 = np.array(mask3)
+            # # image4 = np.array(image4)
+            # # mask4 = np.array(mask4)
+            # # flip_rotate_1, flip_rotate_2, flip_rotate_3, flip_rotate_4 = None, None, None, None
+            # # flip_rotate_1, flip_rotate_2, flip_rotate_unover = None, None, None
+
 
         image1 = self.preprocess(image1)
         mask1 = self.preprocess(mask1)

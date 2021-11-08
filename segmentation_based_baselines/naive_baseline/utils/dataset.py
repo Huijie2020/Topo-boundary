@@ -165,7 +165,7 @@ class BasicDataset(Dataset):
 
         # random crop image and traning data argumentation
         if (not self.test) and (not self.valid):
-            if self.data_augumentation:
+            if self.data_augumentation == True:
                 img, mask = self.random_crop(img, mask, self.crop_size)
                 img, mask = self.data_augu(img, mask)
             else:
