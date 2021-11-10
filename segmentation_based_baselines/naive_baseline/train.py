@@ -165,7 +165,7 @@ def train_semi_net(net,
         # f.close()
         #
         # # load checkpoint
-        # for i in range(1, 110, 2):
+        # for i in range(1, 60, 2):
         #     path_checkpoint = args.load_checkpoint + str(i) + '.pth'
         #     checkpoint = torch.load(path_checkpoint)  # load checkpoint
         #     net.load_state_dict(checkpoint['net'])  # load parameter
@@ -275,9 +275,9 @@ def train_semi_net(net,
         unsup_train_loader = DataLoader(unsup_train, batch_size=unsup_batch_size, shuffle=True, pin_memory=True,
                                         num_workers=4)
         # val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
-        # sup_train_loader_iter = iter(sup_train_loader)
-        # unsup_train_loader_iter = iter(unsup_train_loader)
-        train_loader = iter(zip(cycle(sup_train_loader), cycle(unsup_train_loader)))
+        sup_train_loader_iter = iter(sup_train_loader)
+        unsup_train_loader_iter = iter(unsup_train_loader)
+        # train_loader = iter(zip(cycle(sup_train_loader), cycle(unsup_train_loader)))
 
         tbar = tqdm(range(args.iter_per_epoch), desc=f'Epoch {epoch + 1}/{epochs}', ncols=135)
         print('learning rate **********************:', optimizer.state_dict()['param_groups'][0]['lr'])
@@ -285,18 +285,18 @@ def train_semi_net(net,
 
         for batch_idx in tbar:
             # load data
-            # try:
-            #     sup_l = next(sup_train_loader_iter)
-            # except:
-            #     sup_train_loader_iter = iter(sup_train_loader)
-            #     sup_l = next(sup_train_loader_iter)
-            #
-            # try:
-            #     unsup_l = next(unsup_train_loader_iter)
-            # except:
-            #     unsup_train_loader_iter = iter(unsup_train_loader)
-            #     unsup_l = next(unsup_train_loader_iter)
-            sup_l, unsup_l = next(train_loader)
+            try:
+                sup_l = next(sup_train_loader_iter)
+            except:
+                sup_train_loader_iter = iter(sup_train_loader)
+                sup_l = next(sup_train_loader_iter)
+
+            try:
+                unsup_l = next(unsup_train_loader_iter)
+            except:
+                unsup_train_loader_iter = iter(unsup_train_loader)
+                unsup_l = next(unsup_train_loader_iter)
+            # sup_l, unsup_l = next(train_loader)
 
             image_l, mask_l, name_l = sup_l['image'], sup_l['mask'], sup_l['name']
             image_l, mask_l = image_l.to(device=device, dtype=torch.float32), mask_l.to(device=device, dtype=torch.float32)
