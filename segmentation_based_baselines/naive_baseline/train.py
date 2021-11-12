@@ -165,7 +165,7 @@ def train_semi_net(net,
         # f.close()
         #
         # # load checkpoint
-        # for i in range(1, 60, 2):
+        # for i in range(1, 100, 2):
         #     path_checkpoint = args.load_checkpoint + str(i) + '.pth'
         #     checkpoint = torch.load(path_checkpoint)  # load checkpoint
         #     net.load_state_dict(checkpoint['net'])  # load parameter
