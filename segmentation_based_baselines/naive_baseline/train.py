@@ -55,24 +55,24 @@ def normal_thr_output(net_unsup, thr_ske):
 
     return net_unsup
 
-# # flip and rotate back
-# def flip_rotate_back(net_unsup, flip_rotate, idx):
-#     # flip_rotate_1************** [tensor([0, 0]), tensor([0, 0]), tensor([180, 270])]
-#     net_unsup_idx = net_unsup[idx]
-#     angle = -int(flip_rotate[2][idx])
-#     net_unsup_idx = TF.rotate(net_unsup_idx, angle)
-#
-#     whether_hori_flip = flip_rotate[0][idx]
-#     whether_ver_flip = flip_rotate[1][idx]
-#
-#     transform_back = transforms.Compose([
-#         transforms.RandomVerticalFlip(whether_ver_flip),
-#         transforms.RandomHorizontalFlip(whether_hori_flip)
-#     ])
-#
-#     net_unsup_idx = transform_back(net_unsup_idx)
-#
-#     return net_unsup_idx
+# flip and rotate back
+def flip_rotate_back(net_unsup, flip_rotate, idx):
+    # flip_rotate_1************** [tensor([0, 0]), tensor([0, 0]), tensor([180, 270])]
+    net_unsup_idx = net_unsup[idx]
+    angle = -int(flip_rotate[2][idx])
+    net_unsup_idx = TF.rotate(net_unsup_idx, angle)
+
+    whether_hori_flip = flip_rotate[0][idx]
+    whether_ver_flip = flip_rotate[1][idx]
+
+    transform_back = transforms.Compose([
+        transforms.RandomVerticalFlip(whether_ver_flip),
+        transforms.RandomHorizontalFlip(whether_hori_flip)
+    ])
+
+    net_unsup_idx = transform_back(net_unsup_idx)
+
+    return net_unsup_idx
 
 def transform_back(net_unsup, flip_rotate):
     # flip_rotate_1************** [tensor([0, 0]), tensor([0, 0]), tensor([180, 270])]
@@ -224,39 +224,39 @@ def train_semi_net(net,
         if args.whether_finetune:
             global_step = 0
         else:
-            optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
+            # optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
             start_epoch = checkpoint['epoch'] # set epoch
-            lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+            # lr_schedule.load_state_dict(checkpoint['lr_schedule'])
             global_step = (start_epoch + 1) * (args.iter_per_epoch)
 
-        # # load optimizer and lr_scheduler
-        # if args.resume_epoch > 0:
-        #     for i in range(args.resume_epoch):
-        #         for j in range(args.iter_per_epoch):
-        #             optimizer.zero_grad()
-        #             optimizer.step()
-        #         lr_schedule.step()
+        # load optimizer and lr_scheduler
+        if args.resume_epoch > 0:
+            for i in range(args.resume_epoch):
+                for j in range(args.iter_per_epoch):
+                    optimizer.zero_grad()
+                    optimizer.step()
+                lr_schedule.step()
 
-        val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
-        valid_score = eval_net(args, net, val_loader, device)
-        writer.add_scalar('valid', valid_score, global_step)
-        # save checkpoint
-        checkpoint_best = {
-            "net": net.state_dict(),
-            # 'optimizer': optimizer.state_dict(),
-            "epoch": start_epoch
-            # 'lr_schedule': lr_schedule.state_dict()
-        }
-        if not os.path.isdir(args.checkpoints_dir):
-            os.mkdir(args.checkpoints_dir)
-        # save best model
-        if valid_score > best_valid_socre:
-            best_valid_socre = valid_score
-            with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
-                f.write(str(best_valid_socre))
-            f.close()
-            torch.save(checkpoint_best,
-                       args.checkpoints_dir + 'naive_baseline_best.pth')
+        # val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
+        # valid_score = eval_net(args, net, val_loader, device)
+        # writer.add_scalar('valid', valid_score, global_step)
+        # # save checkpoint
+        # checkpoint_best = {
+        #     "net": net.state_dict(),
+        #     # 'optimizer': optimizer.state_dict(),
+        #     "epoch": start_epoch
+        #     # 'lr_schedule': lr_schedule.state_dict()
+        # }
+        # if not os.path.isdir(args.checkpoints_dir):
+        #     os.mkdir(args.checkpoints_dir)
+        # # save best model
+        # if valid_score > best_valid_socre:
+        #     best_valid_socre = valid_score
+        #     with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+        #         f.write(str(best_valid_socre))
+        #     f.close()
+        #     torch.save(checkpoint_best,
+        #                args.checkpoints_dir + 'naive_baseline_best.pth')
 
 
     else:
@@ -331,8 +331,71 @@ def train_semi_net(net,
                 image_ul1 = image_ul[:, 0, :, :, :] # [batch_size, 3, H, W]
                 image_ul2 = image_ul[:, 1, :, :, :]
 
-                net_unsup1_pre = torch.sigmoid(net(image_ul1))  # [batch_size, 1, H, W]
-                net_unsup2_pre = torch.sigmoid(net(image_ul2))
+                # net_unsup1_pre = torch.sigmoid(net(image_ul1))  # [batch_size, 1, H, W]
+                # net_unsup2_pre = torch.sigmoid(net(image_ul2))
+                # net_unover_pre = torch.sigmoid(net(image_unover))
+
+                net_unsup1_pre = net(image_ul1)  # [batch_size, 1, H, W]
+                net_unsup2_pre = net(image_ul2)
+                net_unover_pre = net(image_unover)
+
+                net_unsup1_pre = normal_thr_output(net_unsup1_pre, args.unsup_thr_ske_train)  # [batch_size, 1, H, W]
+                net_unsup2_pre = normal_thr_output(net_unsup2_pre, args.unsup_thr_ske_train)
+                net_unover_pre = normal_thr_output(net_unover_pre, args.unsup_thr_ske_train)
+
+                for idx in range(net_unsup1_pre.size(0)):
+                    net_unsup1_back_idx = flip_rotate_back(net_unsup1_pre, flip_rotate_1, idx) # [1, 384, 384]
+                    # print middle results
+                    net_unsup1_back_idx_save = net_unsup1_back_idx.cpu().detach().numpy()
+                    net_unsup1_back_idx_save = net_unsup1_back_idx_save[0, :, :]
+                    net_unsup1_back_idx_save = net_unsup1_back_idx_save/np.max(net_unsup1_back_idx_save) * 255
+                    net_unsup1_back_idx_save = net_unsup1_back_idx_save.astype(np.uint8)
+                    path_unsup1_back_idx_save = os.path.join(args.checkpoints_dir, "middle", name[idx]+'_1.png')
+                    Image.fromarray(net_unsup1_back_idx_save).save(path_unsup1_back_idx_save)
+                    net_unsup1_back_idx_save = cv2.imread(path_unsup1_back_idx_save, 1)
+                    net_unsup1_back_idx_bound_save = cv2.rectangle(net_unsup1_back_idx_save,
+                                                                   (int(overlap1_ul[1][idx]),  int(overlap1_ul[0][idx])),
+                                                                    (int(overlap1_ul[1][idx])+args.unsup_crop_in_size, int(overlap1_ul[0][idx])+args.unsup_crop_in_size),
+                                                                    (255, 0, 0), 2)#  red for x1
+                    cv2.imwrite(path_unsup1_back_idx_save, net_unsup1_back_idx_bound_save)
+                    # overlap_unsup1_list.append(net_unsup1_back_idx[:, int(overlap1_ul[0][idx]):int(overlap1_ul[0][idx])+args.unsup_crop_in_size, int(overlap1_ul[1][idx]):int(overlap1_ul[1][idx])+args.unsup_crop_in_size]) # [1, 256, 256]
+
+                    net_unsup2_back_idx = flip_rotate_back(net_unsup2_pre, flip_rotate_2, idx)
+                    # print middle results
+                    net_unsup2_back_idx_save = net_unsup2_back_idx.cpu().detach().numpy()
+                    net_unsup2_back_idx_save = net_unsup2_back_idx_save[0, :, :]
+                    net_unsup2_back_idx_save = net_unsup2_back_idx_save / np.max(net_unsup2_back_idx_save) * 255
+                    net_unsup2_back_idx_save = net_unsup2_back_idx_save.astype(np.uint8)
+                    path_unsup2_back_idx_save = os.path.join(args.checkpoints_dir, "middle",
+                                                             name[idx] + '_2.png')
+                    Image.fromarray(net_unsup2_back_idx_save).save(path_unsup2_back_idx_save)
+                    net_unsup2_back_idx_save = cv2.imread(path_unsup2_back_idx_save, 1)
+                    net_unsup2_back_idx_bound_save = cv2.rectangle(net_unsup2_back_idx_save,
+                                                                   (int(overlap2_ul[1][idx]), int(overlap2_ul[0][idx])),
+                                                                   (int(overlap2_ul[1][idx]) + args.unsup_crop_in_size,
+                                                                    int(overlap2_ul[0][idx]) + args.unsup_crop_in_size),
+                                                                   (255, 0, 0), 2)  # red for x2
+                    cv2.imwrite(path_unsup2_back_idx_save, net_unsup2_back_idx_bound_save)
+                    # overlap_unsup2_list.append(net_unsup2_back_idx[:, int(overlap2_ul[0][idx]):int(overlap2_ul[0][idx])+args.unsup_crop_in_size, int(overlap2_ul[1][idx]):int(overlap2_ul[1][idx])+args.unsup_crop_in_size])
+
+                    net_unover_back_idx = flip_rotate_back(net_unover_pre, flip_rotate_unover, idx)
+                    # print middle results
+                    net_unover_back_idx_save = net_unover_back_idx.cpu().detach().numpy()
+                    net_unover_back_idx_save = net_unover_back_idx_save[0, :, :]
+                    net_unover_back_idx_save = net_unover_back_idx_save / np.max(net_unover_back_idx_save) * 255
+                    net_unover_back_idx_save = net_unover_back_idx_save.astype(np.uint8)
+                    path_unsup2_back_idx_save = os.path.join(args.checkpoints_dir, "middle",
+                                                             name[idx] + '_3.png')
+                    Image.fromarray(net_unover_back_idx_save).save(path_unsup2_back_idx_save)
+                    net_unover_back_idx_save = cv2.imread(path_unsup2_back_idx_save, 1)
+                    net_unover_back_idx_bound_save = cv2.rectangle(net_unover_back_idx_save,
+                                                                   (int(unover_ul[1][idx]), int(unover_ul[0][idx])),
+                                                                   (int(unover_ul[1][idx]) + args.unsup_crop_in_size,
+                                                                    int(unover_ul[0][idx]) + args.unsup_crop_in_size),
+                                                                   (255, 0, 0), 2)  # red for x2
+                    cv2.imwrite(path_unsup2_back_idx_save, net_unover_back_idx_bound_save)
+
+
 
                 if args.data_augumentation == True:
                     net_unsup1_pre = transform_back(net_unsup1_pre, flip_rotate_1)  # [batich_size, 1, 384, 384]
@@ -342,7 +405,6 @@ def train_semi_net(net,
                 overlap_unsup1 = get_overlap(net_unsup1_pre, overlap1_ul, args.unsup_crop_in_size)
                 overlap_unsup2 = get_overlap(net_unsup2_pre, overlap2_ul, args.unsup_crop_in_size)
 
-                net_unover_pre = torch.sigmoid(net(image_unover))
 
                 if args.data_augumentation == True:
                     net_unover_pre = transform_back(net_unover_pre, flip_rotate_unover)  # [2, 1, 256, 256]
@@ -354,20 +416,6 @@ def train_semi_net(net,
                 overlap_unsup1_binary = (overlap_unsup1 > args.mask_thr).float()
                 overlap_unsup2_binary = (overlap_unsup2 > args.mask_thr).float()
                 unvoer_binary = (net_unover > args.mask_thr).float()
-
-                # # negative MSE
-                # # generate mask for negative sample
-                # mask1 = generate_mask(overlap_unsup1_binary, unvoer_binary, pooler)
-                # mask2 = generate_mask(overlap_unsup2_binary, unvoer_binary, pooler)
-
-                # generate binary maps of negative sameple from existing samples
-                # overlap_unsup1_reverse_binary = torch.zeros(overlap_unsup1_binary.shape).float().cuda()
-                # overlap_unsup1_reverse_binary[0] = overlap_unsup1_binary[1]
-                # overlap_unsup1_reverse_binary[1] = overlap_unsup1_binary[0]
-                #
-                # overlap_unsup2_reverse_binary = torch.zeros(overlap_unsup2_binary.shape).float().cuda()
-                # overlap_unsup2_reverse_binary[0] = overlap_unsup2_binary[1]
-                # overlap_unsup2_reverse_binary[1] = overlap_unsup2_binary[0]
 
                 unover_reverse_binary = torch.zeros(unvoer_binary.shape).float().cuda()
                 unover_reverse_binary[0] = unvoer_binary[1]

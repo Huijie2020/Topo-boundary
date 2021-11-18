@@ -183,22 +183,33 @@ class UnsupDataset(Dataset):
         if self.data_augumentation == True:
             # image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image3, mask3, overlap3_ul, image4, mask4, overlap4_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size)
             image1, mask1, overlap1_ul, image2, mask2, overlap2_ul, image_unover, mask_unover, unover_ul = self.overlap_crop(img, mask, self.semi_crop_in_size, self.semi_crop_out_size, self.semi_unover_out_size, self.semi_unover_in_size, self.unover_ul_xy)
-            # # save middle image
-            # image1_save = np.array(image1).astype(np.uint8)
-            # image1_save = cv2.rectangle(image1_save,
-            #                             (overlap1_ul[1], overlap1_ul[0]),
-            #                             (overlap1_ul[1] + self.semi_crop_in_size,overlap1_ul[0]+ self.semi_crop_in_size),
-            #                             (255, 0, 0), 2)
-            # image1_save_path = os.path.join('/mnt/git/Topo-boundary/segmentation_based_baselines/naive_baseline/checkpoints/middle_image', idx + '_01.png')
-            # cv2.imwrite(image1_save_path, image1_save)
-            #
-            # image2_save = np.array(image2).astype(np.uint8)
-            # image2_save = cv2.rectangle(image2_save,
-            #                             (overlap2_ul[1], overlap2_ul[0]),
-            #                             (overlap2_ul[1] + self.semi_crop_in_size, overlap2_ul[0] + self.semi_crop_in_size),
-            #                             (255, 0, 0), 2)
-            # image2_save_path = os.path.join('/mnt/git/Topo-boundary/segmentation_based_baselines/naive_baseline/checkpoints/middle_image',idx + '_02.png')
-            # cv2.imwrite(image2_save_path, image2_save)
+            # save middle image
+            image1_save = np.array(image1).astype(np.uint8)
+            image1_save = cv2.rectangle(image1_save,
+                                        (overlap1_ul[1], overlap1_ul[0]),
+                                        (overlap1_ul[1] + self.semi_crop_in_size,overlap1_ul[0]+ self.semi_crop_in_size),
+                                        (255, 0, 0), 2)
+            image1_save_path = os.path.join('/mnt/git/Topo-boundary/segmentation_based_baselines/naive_baseline/checkpoints/middle_image', idx + '_01.png')
+            cv2.imwrite(image1_save_path, image1_save)
+
+            image2_save = np.array(image2).astype(np.uint8)
+            image2_save = cv2.rectangle(image2_save,
+                                        (overlap2_ul[1], overlap2_ul[0]),
+                                        (overlap2_ul[1] + self.semi_crop_in_size, overlap2_ul[0] + self.semi_crop_in_size),
+                                        (255, 0, 0), 2)
+            image2_save_path = os.path.join('/mnt/git/Topo-boundary/segmentation_based_baselines/naive_baseline/checkpoints/middle_image',idx + '_02.png')
+            cv2.imwrite(image2_save_path, image2_save)
+
+            image_unover_save = np.array(image_unover).astype(np.uint8)
+            image_unover_save = cv2.rectangle(image_unover_save,
+                                        (unover_ul[1], unover_ul[0]),
+                                        (unover_ul[1] + self.semi_unover_in_size,
+                                         unover_ul[0] + self.semi_unover_in_size),
+                                        (255, 0, 0), 2)
+            image_unover_save_path = os.path.join(
+                '/mnt/git/Topo-boundary/segmentation_based_baselines/naive_baseline/checkpoints/middle_image',
+                idx + '_03.png')
+            cv2.imwrite(image_unover_save_path, image_unover_save)
 
             image1, mask1, flip_rotate_1 = self.data_augu(image1, mask1)
             image2, mask2, flip_rotate_2 = self.data_augu(image2, mask2)
