@@ -15,7 +15,7 @@ def get_parser():
         conf = yaml.safe_load(f.read())    # load the config file
     process(**conf)
     
-    with open('./config.yml', 'r') as f:
+    with open('./config/config.yml', 'r') as f:
         conf = yaml.safe_load(f.read())    # load the config file
     process(**conf) 
 
