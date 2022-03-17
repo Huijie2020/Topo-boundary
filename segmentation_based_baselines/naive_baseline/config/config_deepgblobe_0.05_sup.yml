@@ -1,0 +1,74 @@
+# device
+device: 'cuda:0'
+
+epochs: 400 #100 data epochs: 400 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [150, 300],
+#epochs: 12000 #1% data epochs: 12000 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [4500, 8500],
+#epochs: 4200 #5% data epochs: 4200 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [1500, 3000],
+
+
+lr: 0.01 # learning rate, training from the beginning
+gamma: 0.1 # learning drop
+lr_steps: [150, 300]
+#lr_steps: [1500, 3000]
+#lr_steps: [4500, 8500]
+sup_batch_size: 24
+# 100% data epochs: spacenet 250, 600, 850, deepglobe: 150, 300, 400
+# 1% sefl-training data epochs: spacenet 75, 180, 255, deepglobe: 45, 90, 120
+# 1% data epochs: spacenet 7500, 18000, 25500, deepglobe: 4500, 8500, 12000
+
+
+# dataset
+sup_crop_size: 256
+thresh: 0.00001
+
+# dirs
+checkpoints_dir: './checkpoints/'
+save_per_epoch: 4
+
+# test
+test: False # whether run test
+load_checkpoint: './checkpoints/deepglobe/0.01data_sup_iter/iter1/naive_baseline_best.pth' # if test is True, load the checkpoint
+# 1% iter0 no_ta, no_tta
+# ./checkpoints/deepglobe/0.01data_sup_12000epoch/naive_baseline_best.pth
+# 1% iter1 no_ta, no_tta
+# ./checkpoints/deepglobe/0.01data_sup_iter/iter1/naive_baseline_best.pth
+# 1% iter2 no_ta, no_tta
+# ./checkpoints/deepglobe/0.01data_sup_iter/iter2/naive_baseline_best.pth
+# 1% iter0 hog, ta, tta, lr0.0005
+# ./checkpoints/deepglobe/0.01data_semi_60epoch/iter0/naive_baseline_best.pth
+# 1% iter1 hog, ta, tta, lr0.0005
+# ./checkpoints/deepglobe/0.01data_semi_60epoch/iter1/naive_baseline_best.pth
+# 1% iter2 hog, ta, tta, lr0.0005
+# ./checkpoints/deepglobe/0.01data_semi_60epoch/iter2/naive_baseline_best.pth
+# 100% no_ta, no_tta
+# ./checkpoints/deepglobe/1all_data_sup/naive_baseline_best.pth
+
+# resume
+resume: False # whether resume
+whether_fintune: False
+resume_epoch: 50
+
+# match
+match: False # whether resume
+
+# semi
+semi: False
+
+# training data
+data_augumentation: False # whether training dat argumentation
+
+
+# test setting
+thr0: False # whether use threshold = 0 for prediction
+tta: False # whether test-time argumentation
+tta_thr: 0.075 # threshold for prediction with tta
+no_tta_thr: 0.075 # threshold for prediction without tta
+
+# skeleton threshold
+skeleton_thr: 0.0
+skeleton_ig_line: 30
+
+# docker
+docker_sub_dir: segmentation_based_baselines/naive_baseline
+docker_container_name: topo_naive
+docker_port_number: 5001
