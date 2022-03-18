@@ -1,18 +1,21 @@
 # device 
 device: 'cuda:0'
 
-epochs: 120 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [40, 50], iter_per_epoch: 2226, lr 0.0005
-#epochs: 12000 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [40, 50], iter_per_epoch: 2226, lr 0.0005
+epochs: 400 #100 data epochs: 400 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [150, 300],
+#epochs: 12000 #1% data epochs: 12000 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [4500, 8500],
+#epochs: 4200 #5% data epochs: 4200 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [1500, 3000],
 
 
 lr: 0.01 # learning rate, training from the beginning
 gamma: 0.1 # learning drop
-lr_steps: [45, 90]
+lr_steps: [150, 300]
+#lr_steps: [1500, 3000]
 #lr_steps: [4500, 8500]
 sup_batch_size: 24
-# 100% data epochs: spacenet 250, 600, 850, deepglobe: 150, 300, 400
+# 100% data supervised nota notta epochs: spacenet 250, 600, 850, deepglobe: 150, 300, 400
+# 100% data supervised nota notta sefl-training epochs: spacenet 75, 180, 255, deepglobe: 45, 90, 120
 # 1% sefl-training data epochs: spacenet 75, 180, 255, deepglobe: 45, 90, 120
-# 1% data epochs: spacenet 7500, 18000, 25500, deepglobe: 4500, 8500, 12000
+# 1% data supervised nota notta epochs: spacenet 7500, 18000, 25500, deepglobe: 4500, 8500, 12000
 
 
 # dataset

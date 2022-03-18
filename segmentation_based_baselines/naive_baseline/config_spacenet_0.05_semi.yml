@@ -39,7 +39,7 @@ save_per_epoch: 2
 
 # test
 test: False # whether run test
-load_checkpoint: './checkpoints/naive_baseline_best_notta.pth' # if test is True, load the checkpoint
+load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load the checkpoint
 # 1% iter0
 # ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
 # 1% iter0 ta+tta
@@ -72,7 +72,7 @@ resume_epoch: 0
 match: False # whether resume
 
 # training data
-data_augumentation: False # whether training dat argumentation
+data_augumentation: True # whether training dat argumentation
 
 # supervised dataset
 sup_batch_size: 6
@@ -89,6 +89,8 @@ unsup_thr_ske_train: 0
 temp: 0.07
 mask_thr: 0.1
 hog_thr: 0.5
+#mask_thr: 0
+#hog_thr: -1
 
 # unoverlap
 unsup_unover_in_size: 256
@@ -100,10 +102,10 @@ loss_sup_weight: 1
 loss_unsup_weight: 0.1
 
 # test setting
-thr0: False # whether use threshold = 0 for prediction
-tta: False # whether test-time argumentation
-tta_thr: 0.294 # threshold for prediction with tta
-no_tta_thr: 0.075 # threshold for prediction without tta
+thr0: True # whether use threshold = 0 for prediction
+tta: True # whether test-time argumentation
+tta_thr: 0 # threshold for prediction with tta
+no_tta_thr: 0 # threshold for prediction without tta
 
 # skeleton threshold
 skeleton_thr: 0.

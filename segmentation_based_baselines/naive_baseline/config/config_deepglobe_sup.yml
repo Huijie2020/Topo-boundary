@@ -12,9 +12,10 @@ lr_steps: [150, 300]
 #lr_steps: [1500, 3000]
 #lr_steps: [4500, 8500]
 sup_batch_size: 24
-# 100% data epochs: spacenet 250, 600, 850, deepglobe: 150, 300, 400
+# 100% data supervised nota notta epochs: spacenet 250, 600, 850, deepglobe: 150, 300, 400
+# 100% data supervised nota notta sefl-training epochs: spacenet 75, 180, 255, deepglobe: 45, 90, 120
 # 1% sefl-training data epochs: spacenet 75, 180, 255, deepglobe: 45, 90, 120
-# 1% data epochs: spacenet 7500, 18000, 25500, deepglobe: 4500, 8500, 12000
+# 1% data supervised nota notta epochs: spacenet 7500, 18000, 25500, deepglobe: 4500, 8500, 12000
 
 
 # dataset

@@ -1,0 +1,98 @@
+# device
+device: 'cuda:0'
+
+epochs: 100 # deepglobe: number of epochs,(data_split_deepglobe_9000sup_225sup_4271unsup_200val_1530test) [30, 40], iter_per_epoch: 2135, lr 0.0005
+iter_per_epoch: 2135
+iter_start_unsup: 4270
+
+lr: 0.0005 # learning rate, training from the beginning
+gamma: 0.1 # learning drop
+lr_steps: [50, 80]
+# lr 0.01, 0.001, 0.0001
+#spacenet
+# 1% data epochs: 7500, 18000, 25500
+# 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
+# 1% data hog semi epochs iter1: 20, 25, 30 (4000 iter/epoch)
+# 5% data epochs: 1500, 3600, 5100
+# 10% data epochs: [1200, 2200, 3300], [750, 1800, 2550]
+# 100% data epochs: 250, 600, 850
+# 100% data 30% epochs: 75, 180, 255
+
+#deepgblobe
+# 1% data hog semi epochs iter0-3: [30, 40, 60] (data_split_deepglobe_9000sup_45sup_4451unsup_200val_1530test) iter_per_epoch: 2225
+# 5% data hog semi epochs iter0-3: [30, 40, 70] (data_split_deepglobe_9000sup_225sup_4271unsup_200val_1530test) iter_per_epoch: 2135
+
+# dataset
+#crop_size: 256
+thresh: 0.76
+
+# dirs
+checkpoints_dir: './checkpoints/'
+save_per_epoch: 1
+
+# test
+test: False # whether run test
+load_checkpoint: './checkpoints/naive_baseline_29.pth' # if test is True, load the checkpoint
+# 1% iter0 no_ta, no_tta
+# ./checkpoints/deepglobe/0.01data_sup_12000epoch/naive_baseline_best.pth
+# 1% iter0 hog, ta, tta, lr0.0005
+# ./checkpoints/deepglobe/0.01data_semi_60epoch/iter0/naive_baseline_best.pth
+# 1% iter1 hog, ta, tta, lr0.0005
+# ./checkpoints/deepglobe/0.01data_semi_60epoch/iter1/naive_baseline_best.pth
+# 1% iter2 hog, ta, tta, lr0.0005
+# ./checkpoints/deepglobe/0.01data_semi_60epoch/iter2/naive_baseline_best.pth
+# 100% no_ta, no_tta
+# ./checkpoints/deepglobe/1all_data_sup/naive_baseline_best.pth
+
+# resume
+resume: True # whether resume
+whether_finetune: False
+resume_epoch: 30
+
+# match
+match: False # whether resume
+
+# training data
+data_augumentation: True # whether training dat argumentation
+
+# supervised dataset
+sup_batch_size: 6
+sup_crop_size: 256
+#thresh: 0.76
+
+# unsupervised loss
+semi: True
+unsup_crop_in_size: 256
+unsup_crop_out_size: 384
+unsup_batch_size: 2
+unsup_thr_ske_train: 0
+
+temp: 0.07
+mask_thr: 0.1
+hog_thr: 0.5
+#mask_thr: 0
+#hog_thr: -1
+
+# unoverlap
+unsup_unover_in_size: 256
+unsup_unover_out_size: 320
+unover_ul_xy: 32
+
+# loss
+loss_sup_weight: 1
+loss_unsup_weight: 0.1
+
+# test setting
+thr0: False # whether use threshold = 0 for prediction
+tta: True # whether test-time argumentation
+tta_thr: 0.2 # threshold for prediction with tta
+no_tta_thr: 0.2 # threshold for prediction without tta
+
+# skeleton threshold
+skeleton_thr: 0.
+skeleton_ig_line: 30
+
+# docker
+docker_sub_dir: segmentation_based_baselines/naive_baseline
+docker_container_name: topo_naive
+docker_port_number: 5001
