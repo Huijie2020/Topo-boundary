@@ -165,7 +165,7 @@ def train_semi_net(net,
         # f.close()
         #
         # # load checkpoint
-        # for i in range(1, 100, 2):
+        # for i in range(1, 60, 2):
         #     path_checkpoint = args.load_checkpoint + str(i) + '.pth'
         #     checkpoint = torch.load(path_checkpoint)  # load checkpoint
         #     net.load_state_dict(checkpoint['net'])  # load parameter
@@ -226,16 +226,16 @@ def train_semi_net(net,
         else:
             optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
             start_epoch = checkpoint['epoch'] # set epoch
-            lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+            # lr_schedule.load_state_dict(checkpoint['lr_schedule'])
             global_step = (start_epoch + 1) * (args.iter_per_epoch)
 
-        # # load optimizer and lr_scheduler
-        # if args.resume_epoch > 0:
-        #     for i in range(args.resume_epoch):
-        #         for j in range(args.iter_per_epoch):
-        #             optimizer.zero_grad()
-        #             optimizer.step()
-        #         lr_schedule.step()
+        # load optimizer and lr_scheduler
+        if args.resume_epoch > 0:
+            for i in range(args.resume_epoch):
+                for j in range(args.iter_per_epoch):
+                    optimizer.zero_grad()
+                    optimizer.step()
+                lr_schedule.step()
 
         val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=1)
         valid_score = eval_net(args, net, val_loader, device)
@@ -490,29 +490,29 @@ def train_semi_net(net,
                 torch.save(checkpoint,
                            args.checkpoints_dir + 'naive_baseline_{}.pth'.format(epoch))
 
-        # # validdation
-        # if ((global_step % (args.iter_per_epoch * args.save_per_epoch) == 0) and (epoch + 1) % args.save_per_epoch == 0):
-        #     # save validation
-        #     val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=4)
-        #     valid_score = eval_net(args, net, val_loader, device)
-        #     writer.add_scalar('valid', valid_score, global_step)
-        #     # save checkpoint
-        #     checkpoint_best = {
-        #         "net": net.state_dict(),
-        #         'optimizer': optimizer.state_dict(),
-        #         "epoch": epoch,
-        #         'lr_schedule': lr_schedule.state_dict()
-        #     }
-        #     if not os.path.isdir(args.checkpoints_dir):
-        #         os.mkdir(args.checkpoints_dir)
-        #     # save best model
-        #     if valid_score > best_valid_socre:
-        #         best_valid_socre = valid_score
-        #         with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
-        #             f.write(str(best_valid_socre))
-        #         f.close()
-        #         torch.save(checkpoint_best,
-        #                    args.checkpoints_dir + 'naive_baseline_best.pth')
+        # validdation
+        if ((global_step % (args.iter_per_epoch * args.save_per_epoch) == 0) and (epoch + 1) % args.save_per_epoch == 0):
+            # save validation
+            val_loader = DataLoader(val, batch_size=1, shuffle=False, pin_memory=True, drop_last=False, num_workers=4)
+            valid_score = eval_net(args, net, val_loader, device)
+            writer.add_scalar('valid', valid_score, global_step)
+            # save checkpoint
+            checkpoint_best = {
+                "net": net.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                "epoch": epoch,
+                'lr_schedule': lr_schedule.state_dict()
+            }
+            if not os.path.isdir(args.checkpoints_dir):
+                os.mkdir(args.checkpoints_dir)
+            # save best model
+            if valid_score > best_valid_socre:
+                best_valid_socre = valid_score
+                with open(args.checkpoints_dir + 'naive_baseline_best_valid_score.txt', 'w') as f:
+                    f.write(str(best_valid_socre))
+                f.close()
+                torch.save(checkpoint_best,
+                           args.checkpoints_dir + 'naive_baseline_best.pth')
 
         lr_schedule.step()
 
