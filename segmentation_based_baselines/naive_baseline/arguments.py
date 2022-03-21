@@ -4,7 +4,6 @@ import os
 import yaml
 
 def get_parser():
-    
     def process(**params):    # pass in variable numbers of args
         for key, value in params.items():
             parser.add_argument('--'+key, default=value)
@@ -15,11 +14,12 @@ def get_parser():
         conf = yaml.safe_load(f.read())    # load the config file
     process(**conf)
     
-    with open('./config/config.yml', 'r') as f:
+    with open('./config.yml', 'r') as f:
         conf = yaml.safe_load(f.read())    # load the config file
     process(**conf) 
 
     return parser
+
 
 def check_and_add_dir(dir_path,clear=True):
         if not os.path.exists(dir_path):

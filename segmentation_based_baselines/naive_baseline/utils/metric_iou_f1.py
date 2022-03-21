@@ -70,11 +70,12 @@ import skimage.io as io
 from tqdm import tqdm
 
 # path1 = "data/membrane/test/mask_8bit"
+
 path1 = "/mnt/git/Topo-boundary/dataset/prediction/spacenet_gt_binary_test(431)"  # Dir of Ground Truth
-# path1 = "data/membrane/test/mask_8bit"
-# path2 = "data/membrane/test/sub_test/predict1"
-path2 = "/mnt/git/Topo-boundary/dataset/prediction/100data_exp10.5.5_nocontr_ta_tta_repeat_hz_iter0"  # Dir of predict map
-# path2 = "data/membrane/train/predict"
+path2 = "/mnt/git/Topo-boundary/dataset/prediction/pixelcontrastive_spacenet_5per_40k"  # Dir of predict map
+# path1 = "/mnt/git/Topo-boundary/dataset/prediction/spacenet_gt_binary_test(431)"  # Dir of Ground Truth
+# path2 = "/mnt/git/Topo-boundary/dataset/prediction/c3_1percent"  # Dir of predict map
+
 sample1 = os.listdir(path1)
 Iou_all = []  # Iou for each test images
 f1_all = []
@@ -92,6 +93,8 @@ for name in tqdm(sample1):
     # name1 = name[0:-8]+'sat.jpg'
     # mask2 = io.imread(os.path.join(path2, name1))
     mask2 = io.imread(os.path.join(path2, name))
+    # print('mask1.shape',mask1.shape)
+    # print('mask2.shape',mask2.shape)
     mask2 = mask2 / 255.0
     mask2[mask2 >= 0.1] = 1
     mask2[mask2 < 0.1] = 0
