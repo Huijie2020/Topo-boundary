@@ -13,7 +13,7 @@ def data_count():
     # neg_unsup_len = len(data['neg_unsup'])
     valid_len = len(data['valid'])
     test_len = len(data['test'])
-    pretrain_len = len(data['pretrain'])
+    # pretrain_len = len(data['pretrain'])
 
     # print("train_len", train_len)
     print("train_sup_len", train_sup_len)
@@ -22,7 +22,7 @@ def data_count():
     # print("neg_unsup_len", neg_unsup_len)
     print("valid_len", valid_len)
     print("test_len", test_len)
-    print("pretrain_len", pretrain_len)
+    # print("pretrain_len", pretrain_len)
 
 data_count()
 

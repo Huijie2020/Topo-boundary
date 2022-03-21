@@ -2,53 +2,48 @@ import json
 import random
 
 def split_dataset():
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/5_data_split/data_split_5data_1917unsup_100val_431test.json','r') as jf:
+    with open('/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/5_data_split/data_split_deepglobe_225sup_4271unsup_200val_1530test.json','r') as jf:
         data = json.load(jf)
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/5_data_split/data_split_5data_1917unsup_100val_431test.json','r') as jf:
-        data_unsup = json.load(jf)
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/5_data_split/grow_contr/iter3_1534/union_two_image_list.json','r') as jf: # for the first time self-training, use 'name_1600from1998.json'
+    with open('/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/5_data_split/contrstive_3417/iter1_3417/name_selectfromunlabel.json','r') as jf: # for the first time self-training, use 'name_1600from1998.json'
         data_sup_add = json.load(jf)
 
-    data_20 = data["train_sup"]
-    data_1600 = data_sup_add["union_two_image_list"]
-    # train_data_sup_last = data_sup_last['name_1597from4451']
+    data_sup_original = data["train_sup"]
+    data_sup_extra = data_sup_add["name_selectfromunlabel"]
     train_sup_img = []
-    for i in range(len(data_20)):
-        train_sup_img.append(data_20[i])
-    for i in range(len(data_1600)):
-        train_sup_img.append(data_1600[i])
+    for i in range(len(data_sup_original)):
+        train_sup_img.append(data_sup_original[i])
+    for i in range(len(data_sup_extra)):
+        train_sup_img.append(data_sup_extra[i])
 
-    train_unsup_img = data_unsup["train_unsup"]
-    valid_img = data_unsup["valid"]
-    test_img = data_unsup['test']
+    train_unsup_img = data["train_unsup"]
+    valid_img = data["valid"]
+    test_img = data['test']
 
     train_sup_new = []
-    for i in range(3):
+    for i in range(2):
         random.shuffle(train_sup_img)
         for i in range(len(train_sup_img)):
             train_sup_new.append(train_sup_img[i])
-    data_20 = data["train_sup"]
-    for i in range(len(data_20)):
-        train_sup_new.append(data_20[i])
-    train_sup_last = random.sample(data_1600, 541)
-    for i in range(len(train_sup_last)):
-        train_sup_new.append(train_sup_last[i])
-
-    # train_sup_last = random.sample(data_20, 92)
+    data_sup_original = data["train_sup"]
+    for i in range(len(data_sup_original)):
+        train_sup_new.append(data_sup_original[i])
+    # train_sup_last = random.sample(data_sup_extra, 1491)
     # for i in range(len(train_sup_last)):
     #     train_sup_new.append(train_sup_last[i])
 
 
-    with open('/mnt/git/Topo-boundary/conn_experiment/dataset_split/5_data_split/grow_contr/iter3_1534/data_split_0.05data_101sup_1534_1601pseudo_total5748sup_1917unsup_100val_431test_iter3.json','w') as jf:
-    # with open('./scripts/data_split_100val.json','w') as jf:
+    with open('/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/5_data_split/contrstive_3417/iter1_3417/data_split_deepglobe_0.05data_3642sup_225_3417_sup7284_unsup4271_growing_contr_iter1.json','w') as jf:
         json.dump({'train_sup':train_sup_new,
                     'train_unsup': train_unsup_img,
-                    # 'valid':valid_img[:100],
-                    # 'test':test_img[100:test_len],
                    'valid': valid_img,
                    'test': test_img,
                    'pretrain':[]
                     },jf)
+
+    print('\n train_sup length:', len(train_sup_new))
+    print('\n train_unsup length:', len(train_unsup_img))
+    print('\n valid length:', len(valid_img))
+    print('\n test length:', len(test_img))
 
 
 split_dataset()

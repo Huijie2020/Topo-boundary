@@ -51,28 +51,44 @@ def split_dataset():
     # print("test_len", test_len)
     # print("pretrain_len", pretrain_len)
 
-split_dataset()
-
-
-
-
-
-# def split_dataset():
-#     with open('./data_split.json','r') as jf:
-#         data = json.load(jf)
-#     train_len = len(data['train'])
-#     valid_len = len(data['valid'])
-#     test_len = len(data['test'])
-#     # train list
-#     all_images = data['train'] + data['valid'] + data['test'] + data['pretrain']
-#     random.shuffle(all_images)
-#     with open('./data_split_previous.json','w') as jf:
-#         json.dump(data,jf)
-#     with open('./scripts/data_split.json','w') as jf:
-#         json.dump({'train':all_images[:train_len],
-#                     'valid':all_images[train_len:train_len+valid_len],
-#                     'test':all_images[train_len+valid_len:train_len+valid_len+test_len],
-#                     'pretrain':all_images[train_len+valid_len+test_len:]
-#                     },jf)
-#
 # split_dataset()
+
+def split_data_deepglobe_full():
+    with open('/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/fulll_semi_split/data_split_deepglobe_4496sup_4496unsup_200val_1530test.json','r') as jf:
+        data = json.load(jf)
+    jf.close()
+
+    train_sup = data['train_sup'].copy()
+    train_unsup = data['train_unsup'].copy()
+    valid = data['valid'].copy()
+    test = data['test'].copy()
+
+    train_sup_new = []
+    for i in range(2):
+        random.shuffle(train_sup)
+        for i in range(len(train_sup)):
+            train_sup_new.append(train_sup[i])
+    print('length of train_sup_new data {}'.format(len(train_sup_new)))
+    print('length of train_sup data {}'.format(len(train_sup)))
+    print('length of train_unsup data {}'.format(len(train_unsup)))
+    print('length of valid data {}'.format(len(valid)))
+    print('length of test data {}'.format(len(test)))
+
+    with open('/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/fulll_semi_split/data_split_deepglobe_8992_2x4496sup_4496unsup_200val_1530test.json','w') as jf:
+        json.dump({'train_sup': train_sup_new,
+                   'train_unsup': train_unsup,
+                   'valid': valid,
+                   'test': test,
+                   'pretrain': []
+                    },jf)
+    jf.close()
+
+    with open('/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/fulll_semi_split/data_split_deepglobe_4496test.json','w') as jf:
+        json.dump({'train_sup': [],
+                   'train_unsup': [],
+                   'valid': [],
+                   'test': train_sup,
+                   'pretrain': []
+                    },jf)
+    jf.close()
+# split_data_deepglobe_full()
