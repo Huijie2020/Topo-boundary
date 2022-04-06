@@ -6,9 +6,17 @@ graph_based_baselines
 
 dataset/pretrain_checkpoints/
 
+semi-seg
+dataset/cropped_tiff.tar.gz
+dataset/labels
+semi-seg/c3-semiseg/
+segmentation_based_baselines/naive_baseline/records_/
+dataset/prediction/
+
 # pr curve
 Binary-Segmentation-Evaluation-Tool
 Binary-Segmentation-Evaluation-Tool_0
+
 
 *.jpg
 *.png
