@@ -1,14 +1,15 @@
-# device 
+# device
 device: 'cuda:0'
 
-epochs: 60 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [40, 50], iter_per_epoch: 2226, lr 0.0005
-iter_per_epoch: 2225
-iter_start_unsup: 4450
+epochs: 65 # deepglobe: number of epochs,(data_split_deepglobe_9000sup_225sup_4271unsup_200val_1530test) [30, 40], iter_per_epoch: 2135, lr 0.0005
+iter_per_epoch: 2135
+iter_start_unsup: 4270
 
 lr: 0.0005 # learning rate, training from the beginning
 gamma: 0.1 # learning drop
-lr_steps: [30, 40]
+lr_steps: [40, 50]
 # lr 0.01, 0.001, 0.0001
+#spacenet
 # 1% data epochs: 7500, 18000, 25500
 # 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
 # 1% data hog semi epochs iter1: 20, 25, 30 (4000 iter/epoch)
@@ -17,13 +18,18 @@ lr_steps: [30, 40]
 # 100% data epochs: 250, 600, 850
 # 100% data 30% epochs: 75, 180, 255
 
+#deepgblobe
+# 1% data hog semi epochs iter0-3: [30, 40, 60] (data_split_deepglobe_9000sup_45sup_4451unsup_200val_1530test) iter_per_epoch: 2225
+# 5% data hog semi epochs iter0: [40, 50, 65] (data_split_deepglobe_9000sup_225sup_4271unsup_200val_1530test) iter_per_epoch: 2135
+# 5% data hog semi epochs iter1: [40, 50, 65] (data_split_deepglobe_0.05data_3642sup_225_3417_sup7509_unsup4271_growing_contr_iter1) iter_per_epoch: 2135
+
 # dataset
 #crop_size: 256
 thresh: 0.76
 
 # dirs
 checkpoints_dir: './checkpoints/'
-save_per_epoch: 2
+save_per_epoch: 1
 
 # test
 test: False # whether run test
@@ -40,9 +46,9 @@ load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load
 # ./checkpoints/deepglobe/1all_data_sup/naive_baseline_best.pth
 
 # resume
-resume: True # whether resume
+resume: False # whether resume
 whether_finetune: False
-resume_epoch: 0
+resume_epoch: 50
 
 # match
 match: False # whether resume
@@ -65,6 +71,8 @@ unsup_thr_ske_train: 0
 temp: 0.07
 mask_thr: 0.1
 hog_thr: 0.5
+#mask_thr: 0
+#hog_thr: -1
 
 # unoverlap
 unsup_unover_in_size: 256
@@ -85,7 +93,7 @@ no_tta_thr: 0 # threshold for prediction without tta
 skeleton_thr: 0.
 skeleton_ig_line: 30
 
-# docker 
+# docker
 docker_sub_dir: segmentation_based_baselines/naive_baseline
 docker_container_name: topo_naive
 docker_port_number: 5001

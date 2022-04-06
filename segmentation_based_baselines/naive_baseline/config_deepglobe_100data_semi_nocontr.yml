@@ -1,25 +1,18 @@
 # device 
 device: 'cuda:0'
 
-# training params
-#epochs: 10 # number of epochs
-#batch_size: 1
-#lr: 0.0001 # learning rate
-#epochs: 255 # number of epochs
-#epochs: 60 # (data_split_sup2020_unsup1998_growing_iter1), iter_per_epoch: 999, [80, 90], lr 0.00005 [40] finetune
-epochs: 110 # spacenet: number of epochs,(data_split_1data_pseudo1998_sup5994_unsup1998, data_split_1data_99unsup_100val_431test_5994sup) [80, 100], iter_per_epoch: 999, lr 0.0005
-#epochs: 100 # predict 200 img growing
-#epochs: 80 # number of epochs data_split_1data_9990add_10010total_99unsup_100val_431test_10010totalsup [60, 70], iter_per_epoch: 1669, lr 0.0005
-#epochs: 220 # number of epochs data_split_1data_1055pos_3168sup [150, 190],iter_per_epoch: 528, lr 0.0005
-#iter_per_epoch: 528
-iter_per_epoch: 999
-iter_start_unsup: 3996
-#batch_size: 24
-#lr: 0.001 # learning rate
-lr: 0.0005 # learning rate, training from the beginning
-#lr: 0.00005 # learning rate finetune
+epochs: 400 # deepglobe: number of epochs,(data_split_deepglobe_4496sup_4496unsup_200val_1530test.json) [150, 300], iter_per_epoch: 374, lr 0.01
+#epochs: 12000 #1% data epochs: 12000 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [4500, 8500],
+#epochs: 4200 #5% data epochs: 4200 # deepglobe: number of epochs,(data_split_deepglobe_45sup_4451unsup_200val_1530test) [1500, 3000],
+
+iter_per_epoch: 374
+iter_start_unsup: 4000000
+
+lr: 0.01 # first pure supervised training
+
 gamma: 0.1 # learning drop
-lr_steps: [60, 75]
+
+lr_steps: [110, 250]
 # lr 0.01, 0.001, 0.0001
 # 1% data epochs: 7500, 18000, 25500
 # 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
@@ -27,6 +20,7 @@ lr_steps: [60, 75]
 # 5% data epochs: 1500, 3600, 5100
 # 10% data epochs: [1200, 2200, 3300], [750, 1800, 2550]
 # 100% data epochs: 250, 600, 850
+# 100% data no contrastive, with ta&tta: [95, 180, 256]
 # 100% data 30% epochs: 75, 180, 255
 
 # dataset
@@ -35,11 +29,11 @@ thresh: 0.76
 
 # dirs
 checkpoints_dir: './checkpoints/'
-save_per_epoch: 2
+save_per_epoch: 4
 
 # test
 test: False # whether run test
-load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load the checkpoint
+load_checkpoint: './checkpoints/naive_baseline_175.pth' # if test is True, load the checkpoint
 # 1% iter0
 # ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
 # 1% iter0 ta+tta
@@ -60,7 +54,7 @@ load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load
 # resume
 resume: True # whether resume
 whether_finetune: False
-resume_epoch: 0
+resume_epoch: 176
 
 # match
 match: False # whether resume
@@ -69,7 +63,8 @@ match: False # whether resume
 data_augumentation: True # whether training dat argumentation
 
 # supervised dataset
-sup_batch_size: 6
+#sup_batch_size: 6 # epoch from the beginning of semi-supvised training
+sup_batch_size: 24 # first epoch pure supvised training
 sup_crop_size: 256
 #thresh: 0.76
 

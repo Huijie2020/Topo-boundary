@@ -60,8 +60,15 @@ def train_net(net,
         net.load_state_dict(checkpoint['net']) # load parameter
         optimizer.load_state_dict(checkpoint['optimizer']) # load optimizer
         start_epoch = checkpoint['epoch'] # set epoch
-        lr_schedule.load_state_dict(checkpoint['lr_schedule'])
+        # lr_schedule.load_state_dict(checkpoint['lr_schedule'])
         global_step = (start_epoch + 1) * (n_train // batch_size + 1)
+
+        if args.resume_epoch > 0:
+            for i in range(args.resume_epoch):
+                for j in range(10):
+                    optimizer.zero_grad()
+                    optimizer.step()
+                lr_schedule.step()
     else:
         global_step = 0
     #
@@ -92,7 +99,7 @@ def train_net(net,
                 # save checkpoint
                 # if (global_step % (n_train // (batch_size)) == 0):
                 # if (epoch + 1) % 2 == 0:
-                if (global_step % ((n_train // batch_size) + 1) == 0) and (epoch + 1) % 10 == 0:
+                if (global_step % ((n_train // batch_size) + 1) == 0) and (epoch + 1) % 100 == 0:
                     # svae validation and plot
                     valid_score = eval_net(args,net,val_loader,device)
                     # scheduler.step(val_score)

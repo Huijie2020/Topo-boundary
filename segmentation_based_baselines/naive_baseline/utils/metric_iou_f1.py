@@ -71,8 +71,8 @@ from tqdm import tqdm
 
 # path1 = "data/membrane/test/mask_8bit"
 
-path1 = "/mnt/git/Topo-boundary/dataset/prediction/spacenet_gt_binary_test(431)"  # Dir of Ground Truth
-path2 = "/mnt/git/Topo-boundary/dataset/prediction/pixelcontrastive_spacenet_5per_40k"  # Dir of predict map
+path1 = "/mnt/git/Topo-boundary/dataset/prediction/spacenet_gt_binary"  # Dir of Ground Truth
+path2 = "/mnt/git/Topo-boundary/dataset/prediction/1data_exp1.5.4_contr_ta_tta_nohog_nomask_projector_unsupweight0.1_temp0.07_lr0.0005_repeat_hz_epoch80"  # Dir of predict map
 # path1 = "/mnt/git/Topo-boundary/dataset/prediction/spacenet_gt_binary_test(431)"  # Dir of Ground Truth
 # path2 = "/mnt/git/Topo-boundary/dataset/prediction/c3_1percent"  # Dir of predict map
 

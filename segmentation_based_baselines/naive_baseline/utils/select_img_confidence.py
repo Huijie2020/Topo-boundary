@@ -8,7 +8,7 @@ import random
 
 
 
-source_dir = '/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/exp5.5.4_hog_ta_tta_contr_maskthr0.5_projector_unsupweight0.5_temp0.07_lr0.0005_repeat_hz/iter1/select_4271_from_iter0'
+source_dir = '/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/deepglobe_0.05data_exp5.5.4_hog_ta_tta_contr_maskthr0.5_projector_unsupweight0.5_temp0.07_lr0.0005_repeat_hz/iter2/select_4271_from_iter1'
 source_img_dir = os.path.join(source_dir, 'segmentation') # 1998 segmentation folder
 # source_json = '/mnt/git/Topo-boundary/conn_experiment/dataset_split/1_data_split/data_split_1998test(0.01data).json' # load 1998 image name
 source_json = '/mnt/git/Topo-boundary/conn_experiment/deepglobe_experiment/dataset_split/5_data_split/data_split_deepglobe_225sup_4271unsup_200val_1530test.json' # load 1998 image name
@@ -103,7 +103,9 @@ def select_conf_iter1():
 
 
 
-
+# define list Union function, for the second self-training
+def list_union (lst1, lst2):
+    return list(set(lst1).union(set(lst2)))
 
 
 def select_conf_iter2_last():
@@ -175,11 +177,6 @@ def select_conf_iter2_last():
         json.dump({'name_leftfromunlabel':other_name
                     },jf)
 
-
-    # define list Union function, for the second self-training
-    def list_union (lst1, lst2):
-        return list(set(lst1).union(set(lst2)))
-
     source_iter_pre_json = os.path.join(source_dir, 'union_two_image_list_iter1.json')
     tar_union_two_json = os.path.join(source_dir, 'union_two_image_list_iter2.json') # new file name json
 
@@ -231,10 +228,11 @@ def select_conf_iter2_last():
 # union_two_image_list 3706 (1% spacenet contrastive loss iter3 )
 
 # deepglobe 3417 (5%)
+# union_two_image_list 3487 ((5% deepglobe contrastive loss iter2))
 
-
-# with open(tar_select_img_json,'r') as jf:
+# tar_union_two_json = os.path.join(source_dir, 'union_two_image_list_iter2.json')
+# with open(tar_union_two_json,'r') as jf:
 #     data_count = json.load(jf)
 # jf.close()
-# data_count_num = len(data_count["name_selectfromunlabel"])
+# data_count_num = len(data_count["union_two_image_list"])
 # print(data_count_num)
