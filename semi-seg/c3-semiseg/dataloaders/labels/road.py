@@ -38,9 +38,21 @@ Label = namedtuple(
 
 
 # Our extended list of label types. Our train id is compatible with Cityscapes
+# labels = [
+#     #       name                     id    trainId   category catId
+#     #       hasInstances   ignoreInEval   color
+#     Label("unlabeled", 0, 255, "void", 0, False, True, (0, 0, 0)),
+#     Label("road", 1, 0, "flat", 1, False, False, (255,255,255)),
+# ]
+
+# labels = [
+#     #       name             id  trainId   category       catId hasInstances ignoreInEval color
+#     Label("unlabeled"       , 0, 255,       "void",         0, False, True, (0, 0, 0)),
+#     Label("road"            , 1, 0,         "flat",         1, False, False, (255,255,255)),
+# ]
+
 labels = [
-    #       name                     id    trainId   category catId
-    #       hasInstances   ignoreInEval   color
-    Label("unlabeled", 0, 255, "void", 0, False, True, (0, 0, 0)),
-    Label("road", 1, 0, "flat", 1, False, False, (255,255,255)),
+    #       name             id  trainId   category       catId hasInstances ignoreInEval color
+    Label("unlabeled"       , 0, 0,         "flat",         0, False, False, (0, 0, 0)),
+    Label("road"            , 1, 1,         "flat",         1, False, False, (255,255,255)),
 ]
