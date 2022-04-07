@@ -34,6 +34,18 @@ from models.gabore_filter_bank import GaborFilters
 #             count += 1
 #     return pred_mask
 
+
+def normal_thr_output(net_unsup, thr_ske):
+    net_unsup_min = net_unsup.min(-1)[0].min(-1)[0]
+    net_unsup_max = net_unsup.max(-1)[0].max(-1)[0]
+    net_unsup = (net_unsup - net_unsup_min[:, :, None, None]) / (net_unsup_max[:, :, None, None] - net_unsup_min[:, :, None, None])
+
+    thr_mask = (net_unsup >= thr_ske).float()
+    net_unsup = net_unsup * thr_mask
+
+    return net_unsup
+
+
 def eval_net(args,net,loader, device):
     """Evaluation without the densecrf with the dice coefficient"""
     if args.tta == True:
@@ -157,7 +169,9 @@ def eval_net(args,net,loader, device):
                     # mask_pred = merge(img, mask_preds).to(device=device, dtype=torch.float32)
                     mask_pred = net(img)
                     # mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0).cpu().detach().numpy()
-                    mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0)
+                    # mask_save = torch.sigmoid(mask_pred).squeeze(0).squeeze(0)
+                    mask_save = normal_thr_output(mask_pred, 0)
+                    mask_save = mask_save.squeeze(0).squeeze(0)
                     if not args.test:
                         mask_save = mask_save.cpu().detach().numpy()
                         mask_max = np.max(mask_save)
@@ -177,9 +191,9 @@ def eval_net(args,net,loader, device):
                             Image.fromarray(mask_save * 255) \
                                 .convert('L').save(os.path.join('./records/test/segmentation', name[0] + '.png'))
                         else:
-                            mask_max = torch.max(mask_save)
-                            mask_min = torch.min(mask_save)
-                            mask_save = (mask_save - mask_min) / (mask_max - mask_min)
+                            # mask_max = torch.max(mask_save)
+                            # mask_min = torch.min(mask_save)
+                            # mask_save = (mask_save - mask_min) / (mask_max - mask_min)
                             no_tta_thr = args.no_tta_thr
                             thr_mask = (mask_save >= no_tta_thr).float()
                             mask_save = mask_save * thr_mask
