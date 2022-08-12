@@ -15,9 +15,13 @@ Binary-Segmentation-Evaluation-Tool_0
 *.txt
 *.json
 *.pickle
+*.tar.gz
 
 # expriment
 conn_experiment/
+semi-seg/
+dataset/labels/
+dataset/prediction/
 
 # compilation and distribution
 __pycache__

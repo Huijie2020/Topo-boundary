@@ -62,3 +62,7 @@ def update_dir_match(args):
     check_and_add_dir('./records/test/segmentation_overlap',clear=False)
     check_and_add_dir('./records/test/skeleton',clear=False)
 
+def update_dir_cal_ctr(args):
+    check_and_add_dir('./records/test/ctr_pos',clear=False)
+    check_and_add_dir('./records/test/ctr_neg',clear=False)
+
