@@ -3,6 +3,7 @@
 *.png
 *.json
 records
+records_
 **/__pycache__
 checkpoints
 !img/*
