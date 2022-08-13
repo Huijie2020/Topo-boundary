@@ -1,0 +1,111 @@
+# device 
+device: 'cuda:0'
+
+# training params
+#epochs: 10 # number of epochs
+#batch_size: 1
+#lr: 0.0001 # learning rate
+#epochs: 255 # number of epochs
+#epochs: 60 # (data_split_sup2020_unsup1998_growing_iter1), iter_per_epoch: 999, [80, 90], lr 0.00005 [40] finetune
+epochs: 110 # spacenet: number of epochs,(data_split_1data_pseudo1998_sup5994_unsup1998, data_split_1data_99unsup_100val_431test_5994sup) [80, 100], iter_per_epoch: 999, lr 0.0005
+#epochs: 100 # predict 200 img growing
+#epochs: 80 # number of epochs data_split_1data_9990add_10010total_99unsup_100val_431test_10010totalsup [60, 70], iter_per_epoch: 1669, lr 0.0005
+#epochs: 220 # number of epochs data_split_1data_1055pos_3168sup [150, 190],iter_per_epoch: 528, lr 0.0005
+#iter_per_epoch: 528
+iter_per_epoch: 999
+iter_start_unsup: 3996
+#batch_size: 24
+#lr: 0.001 # learning rate
+lr: 0.0005 # learning rate, training from the beginning
+#lr: 0.00005 # learning rate finetune
+gamma: 0.1 # learning drop
+lr_steps: [60, 75]
+# lr 0.01, 0.001, 0.0001
+# 1% data epochs: 7500, 18000, 25500
+# 1% data hog semi epochs iter0: 80, 100, 120 (999 iter/epoch)
+# 1% data hog semi epochs iter1: 20, 25, 30 (4000 iter/epoch)
+# 5% data epochs: 1500, 3600, 5100
+# 10% data epochs: [1200, 2200, 3300], [750, 1800, 2550]
+# 100% data epochs: 250, 600, 850
+# 100% data 30% epochs: 75, 180, 255
+
+# dataset
+#crop_size: 256
+thresh: 0.76
+
+# dirs
+checkpoints_dir: './checkpoints/'
+save_per_epoch: 2
+
+# test
+test: False # whether run test
+load_checkpoint: './checkpoints/naive_baseline_best.pth' # if test is True, load the checkpoint
+# 1% iter0
+# ./checkpoints/model_last/1data_25500epoch/naive_baseline_best.pth
+# 1% iter0 ta+tta
+# ./checkpoints/model_last/1data_25500epoch/exp1.2_best_thr0_ta_tta_iter/iter0/naive_baseline_best.pth
+# 1% iter0 hog, ta, tta, lr0.0005
+# ./checkpoints/model_last/1data_25500epoch/exp1.3_best_thr0_unsupweight1_hog_ta_tta_lr0.0005_iter/iter0/naive_baseline_best.pth
+# 1% iter1 hog, ta, tta, lr0.0005
+# ./checkpoints/model_last/1data_25500epoch/exp1.3_best_thr0_unsupweight1_hog_ta_tta_lr0.0005_iter/iter1/naive_baseline_best.pth
+# 1% iter1
+#'./checkpoints/model_last/1data_25500epoch/exp1_best_thr0_iter/best_thr0.76and0_iter1/naive_baseline_best.pth'
+# 5% iter0
+#./checkpoints/model_last/5data_5100epoch/naive_baseline_best.pth
+# 5% iter0 ta+tta
+# ./checkpoints/model_last/5data_5100epoch/exp5.2_best_thr0_ta_tta_iter/iter0/naive_baseline_best.pth
+# 5% iter1
+# ./checkpoints/model_last/5data_5100epoch/exp5_best_thr0_iter/best_thr0.76and0_iter1/naive_baseline_best.pth
+
+# resume
+resume: False # whether resume
+whether_finetune: False
+resume_epoch: 0
+
+# match
+match: False # whether resume
+
+# training data
+data_augumentation: True # whether training dat argumentation
+
+# supervised dataset
+sup_batch_size: 6
+sup_crop_size: 256
+#thresh: 0.76
+
+# unsupervised loss
+semi: True
+unsup_crop_in_size: 256
+unsup_crop_out_size: 384
+unsup_batch_size: 2
+unsup_thr_ske_train: 0
+
+temp: 0.07
+mask_thr: 0.1
+hog_thr: 0.5
+#mask_thr: 0
+#hog_thr: -1
+
+# unoverlap
+unsup_unover_in_size: 256
+unsup_unover_out_size: 320
+unover_ul_xy: 32
+
+# loss
+loss_sup_weight: 1
+loss_unsup_weight: 0.1
+
+# test setting
+thr0: True # whether use threshold = 0 for prediction
+tta: True # whether test-time argumentation
+tta_thr: 0 # threshold for prediction with tta
+no_tta_thr: 0 # threshold for prediction without tta
+
+# skeleton threshold
+skeleton_thr: 0.
+skeleton_ig_line: 30
+
+# docker 
+docker_sub_dir: segmentation_based_baselines/naive_baseline
+docker_container_name: topo_naive
+docker_port_number: 5001
